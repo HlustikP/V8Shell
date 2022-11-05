@@ -4,6 +4,11 @@ void SetCWD(fs::path path) {
   RuntimeMemory::current_directoy = path;
 }
 
+void PrintCWD() {
+  auto path = RuntimeMemory::current_directoy.generic_string();
+  std::cout << path;
+}
+
 // The callback that is invoked by v8 whenever the JavaScript 'print'
 // function is called.  Sends its arguments to stdout separated by
 // semicolons and ending with a newline.
@@ -22,6 +27,7 @@ void Print(const v8::FunctionCallbackInfo<v8::Value>& args) {
   }
 
    std::cout << std::endl;
+   PrintCWD();
 }
 
 
@@ -89,11 +95,36 @@ void Version(const v8::FunctionCallbackInfo<v8::Value>& args) {
     v8::String::NewFromUtf8(args.GetIsolate(), v8::V8::GetVersion()).ToLocalChecked());
 }
 
+// Changes the current directory to operate on
 void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args) {
   if (args.Length() == 0) {
-    auto& path = RuntimeMemory::current_directoy;
-    std::cout << path;
+    PrintCWD();
+
+    return;
   }
+
+  v8::HandleScope handle_scope(args.GetIsolate());
+
+  if (args[0]->IsNumber()) {
+    const auto js_value = args[0]->Int32Value(args.GetIsolate()->GetCurrentContext());
+
+    if (js_value.IsNothing()) {
+      args.GetIsolate()->ThrowError("[Error] Cannot deduce an argument value");
+      std::cout << std::endl;
+      PrintCWD();
+
+      return;
+    }
+
+    // Extract positive Integer
+    const auto num = abs(js_value.FromJust());
+
+    for (auto i = 0; i < num; i++) {
+      RuntimeMemory::current_directoy = RuntimeMemory::current_directoy.parent_path();
+    }
+  }
+
+  PrintCWD();
 }
 
 // Reads a file into a v8 string.
@@ -154,6 +185,7 @@ bool ExecuteString(v8::Isolate* isolate, v8::Local<v8::String> source,
           // the returned value.
           v8::String::Utf8Value str(isolate, result);
           std::cout << ToCString(str) << std::endl;
+          PrintCWD();
       }
       return true;
     }
@@ -204,6 +236,8 @@ void ReportException(v8::Isolate* isolate, v8::TryCatch* try_catch) {
       v8::String::Utf8Value stack_trace(isolate, stack_trace_string);
       std::cerr << ToCString(stack_trace) << std::endl;
     }
+
+    PrintCWD();
   }
 }
 

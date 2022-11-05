@@ -151,7 +151,10 @@ void RunShell(v8::Local<v8::Context> context, v8::Platform* platform) {
   auto path = fs::current_path();
   SetCWD(path);
 
-  std::cout << "[V8Shell 0.0] V8 version " << v8::V8::GetVersion() << std::endl;
+  std::cout << "[V8Shell " << current_version << "] V8 version " 
+    << v8::V8::GetVersion() << std::endl;
+  PrintCWD();
+
   static const int kBufferSize = 256;
 
   // Enter the execution environment before evaluating any code.
