@@ -1,5 +1,10 @@
 #include "Commands.h"
 
+// path + string = path
+auto operator+(fs::path const& lhs, std::string const& rhs) -> fs::path {
+  return fs::path(lhs.generic_string().append(rhs));
+}
+
 void SetCWD(fs::path path) {
   RuntimeMemory::current_directoy = path;
 }
@@ -96,6 +101,8 @@ void Version(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 
 // Changes the current directory to operate on
+// Inputting a number will go up this many parent directories
+// Inputting a string will attempt to enter that subdirectory
 void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args) {
   if (args.Length() == 0) {
     PrintCWD();
@@ -122,6 +129,32 @@ void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args) {
     for (auto i = 0; i < num; i++) {
       RuntimeMemory::current_directoy = RuntimeMemory::current_directoy.parent_path();
     }
+  }
+
+  if (args[0]->IsString()) {
+    const auto js_value = args[0]->ToString(args.GetIsolate()->GetCurrentContext());
+
+    if (js_value.IsEmpty()) {
+      args.GetIsolate()->ThrowError("[Error] Cannot deduce an argument value");
+      std::cout << std::endl;
+      PrintCWD();
+
+      return;
+    }
+
+    v8::String::Utf8Value str(args.GetIsolate(), args[0]);
+    auto value = std::string(ToCString(str));
+
+    fs::path trial_path = RuntimeMemory::current_directoy;
+    if (!fs::is_directory(trial_path.append(value))) {
+      std::cerr << "[Error] " << trial_path.generic_string() << " is not a directory" << std::endl;
+      PrintCWD();
+
+      return;
+    }
+
+    // path::append operates in-place
+    RuntimeMemory::current_directoy.append(value);
   }
 
   PrintCWD();
@@ -208,7 +241,7 @@ void ReportException(v8::Isolate* isolate, v8::TryCatch* try_catch) {
     v8::String::Utf8Value filename(isolate,
         message->GetScriptOrigin().ResourceName());
     v8::Local<v8::Context> context(isolate->GetCurrentContext());
-    const char* filename_string = ToCString(filename);
+    const auto* filename_string = ToCString(filename);
     int linenum = message->GetLineNumber(context).FromJust();
     std::cerr << filename_string << ":" << linenum << " - " << exception_string
       << std::endl;

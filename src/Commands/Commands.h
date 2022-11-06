@@ -39,6 +39,7 @@ void RenameFile(const v8::FunctionCallbackInfo<v8::Value>& args);
 void DeleteFile(const v8::FunctionCallbackInfo<v8::Value>& args);
 void CreateDirectory(const v8::FunctionCallbackInfo<v8::Value>& args);
 void CreateFile(const v8::FunctionCallbackInfo<v8::Value>& args);
+void Help(const v8::FunctionCallbackInfo<v8::Value>& args);
 
 // Helper functions
 v8::MaybeLocal<v8::String> ReadFile(v8::Isolate* isolate, const char* name);
