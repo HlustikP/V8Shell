@@ -7,6 +7,9 @@ add_executable (V8Shell
 	"${CMAKE_PROJECT_DIR}Commands/Commands.cpp"
 )
 
+# This is so we have something to link gtest against
+set_target_properties(V8Shell PROPERTIES ENABLE_EXPORTS TRUE)
+
 set_property(TARGET V8Shell PROPERTY CXX_STANDARD 17)
 
 target_include_directories(V8Shell PUBLIC $ENV{V8_INCLUDE} ${CMAKE_PROJECT_DIR}Commands)
