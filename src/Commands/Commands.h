@@ -17,6 +17,8 @@
 #include "v8-script.h"
 #include "v8-template.h"
 
+#include "../utils/console.hpp"
+
 namespace fs = std::filesystem;
 
 volatile struct RuntimeMemory {
@@ -25,6 +27,8 @@ volatile struct RuntimeMemory {
 
 void SetCWD(fs::path path);
 void PrintCWD();
+void PrintErrorTag(std::ostream& stream = std::cerr);
+void PrintWarningTag(std::ostream& stream = std::cerr);
 
 // Commands
 void Print(const v8::FunctionCallbackInfo<v8::Value>& args);

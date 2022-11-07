@@ -1,45 +1,49 @@
 #include "V8Shell.h"
 
 int main(int argc, char* argv[]) {
-    auto platform = SetupV8(argc, argv);
-    if (platform == nullptr) {
-        std::cerr << "[ERROR] Failed to setup V8 VM" << std::endl;
+  auto platform = SetupV8(argc, argv);
+  if (platform == nullptr) {
 
-        return 1;
-    }
+    PrintErrorTag();
+    std::cerr << " Failed to setup V8 VM" << std::endl;
 
-    v8::Isolate::CreateParams create_params;
-    v8::Isolate* isolate = nullptr;
-    auto v8_setup_valid = SetupV8Isolate(&create_params, &isolate);
-    if (!v8_setup_valid) {
-        std::cerr << "[ERROR] Failed to setup V8 Isolate" << std::endl;
+    return 1;
+  }
 
-        return 1;
-    }
+  v8::Isolate::CreateParams create_params;
+  v8::Isolate* isolate = nullptr;
+  auto v8_setup_valid = SetupV8Isolate(&create_params, &isolate);
+  if (!v8_setup_valid) {
+    PrintErrorTag();
+    std::cerr << " Failed to setup V8 Isolate" << std::endl;
 
-    Settings settings;
+    return 1;
+  }
 
-    // no arguments -> run shell, otherwise make it depend on the arguments
-    settings.run_shell = (argc == 1);
+  Settings settings;
+
+  // no arguments -> run shell, otherwise make it depend on the arguments
+  settings.run_shell = (argc == 1);
     
-    int result = 0;
-    {
-        v8::Isolate::Scope isolate_scope(isolate);
-        v8::HandleScope handle_scope(isolate);
-        v8::Local<v8::Context> context = CreateShellContext(isolate);
-        if (context.IsEmpty()) {
-            std::cerr << "[Error] Failed to create shell context" << std::endl;
+  int result = 0;
+  {
+    v8::Isolate::Scope isolate_scope(isolate);
+    v8::HandleScope handle_scope(isolate);
+    v8::Local<v8::Context> context = CreateShellContext(isolate);
+    if (context.IsEmpty()) {
+      PrintErrorTag();
+      std::cerr << " Failed to create shell context" << std::endl;
 
-            return 1;
-        }
-        v8::Context::Scope context_scope(context);
-        result = RunMain(isolate, platform.get(), argc, argv, settings);
-        if (settings.run_shell) RunShell(context, platform.get());
+      return 1;
     }
+    v8::Context::Scope context_scope(context);
+    result = RunMain(isolate, platform.get(), argc, argv, settings);
+    if (settings.run_shell) RunShell(context, platform.get());
+  }
 
-    Cleanup(isolate, &create_params);
+  Cleanup(isolate, &create_params);
     
-    return result;
+  return result;
 }
 
 // Setup the V8 VM, returns nullptr on failure
@@ -95,54 +99,59 @@ v8::Local<v8::Context> CreateShellContext(v8::Isolate* isolate) {
     global->Set(isolate, "cd", v8::FunctionTemplate::New(isolate, ChangeDirectory));
     global->Set(isolate, "changeDirectory", 
       v8::FunctionTemplate::New(isolate, ChangeDirectory));
+    global->Set(isolate, "ls", v8::FunctionTemplate::New(isolate, ListFiles));
+    global->Set(isolate, "ll", v8::FunctionTemplate::New(isolate, ListFiles));
 
     return v8::Context::New(isolate, NULL, global);
 }
 
 // Process remaining command line arguments and execute files
 int RunMain(v8::Isolate* isolate, v8::Platform* platform, int argc,
-    char* argv[], Settings& settings) {
-    for (int i = 1; i < argc; i++) {
-        const char* str = argv[i];
-        if (strcmp(str, "--shell") == 0) {
-            settings.run_shell = true;
-        }
-        else if (strcmp(str, "-f") == 0) {
-            // Ignore any -f flags for compatibility with the other stand-
-            // alone JavaScript engines.
-            continue;
-        }
-        else if (strncmp(str, "--", 2) == 0) {
-            fprintf(stderr,
-                "Warning: unknown flag %s.\nTry --help for options\n", str);
-        }
-        else if (strcmp(str, "-e") == 0 && i + 1 < argc) {
-            // Execute argument given to -e option directly.
-            v8::Local<v8::String> file_name =
-                v8::String::NewFromUtf8Literal(isolate, "unnamed");
-            v8::Local<v8::String> source;
-            if (!v8::String::NewFromUtf8(isolate, argv[++i]).ToLocal(&source)) {
-                return 1;
-            }
-            bool success = ExecuteString(isolate, source, file_name, false, true);
-            while (v8::platform::PumpMessageLoop(platform, isolate)) continue;
-            if (!success) return 1;
-        }
-        else {
-            // Use all other arguments as names of files to load and run.
-            v8::Local<v8::String> file_name =
-                v8::String::NewFromUtf8(isolate, str).ToLocalChecked();
-            v8::Local<v8::String> source;
-            if (!ReadFile(isolate, str).ToLocal(&source)) {
-                fprintf(stderr, "Error reading '%s'\n", str);
-                continue;
-            }
-            bool success = ExecuteString(isolate, source, file_name, false, true);
-            while (v8::platform::PumpMessageLoop(platform, isolate)) continue;
-            if (!success) return 1;
-        }
+  char* argv[], Settings& settings) {
+  for (int i = 1; i < argc; i++) {
+    const char* str = argv[i];
+    if (strcmp(str, "--shell") == 0) {
+      settings.run_shell = true;
     }
-    return 0;
+    else if (strcmp(str, "-f") == 0) {
+      // Ignore any -f flags for compatibility with the other stand-
+      // alone JavaScript engines.
+      continue;
+    }
+    else if (strncmp(str, "--", 2) == 0) {
+      PrintWarningTag();
+      std::cerr << " used unknown flag " << str << std::endl 
+        << "Try --help for options" << std::endl;
+    }
+    else if (strcmp(str, "-e") == 0 && i + 1 < argc) {
+      // Execute argument given to -e option directly.
+      v8::Local<v8::String> file_name =
+          v8::String::NewFromUtf8Literal(isolate, "unnamed");
+      v8::Local<v8::String> source;
+      if (!v8::String::NewFromUtf8(isolate, argv[++i]).ToLocal(&source)) {
+        return 1;
+      }
+      bool success = ExecuteString(isolate, source, file_name, false, true);
+      while (v8::platform::PumpMessageLoop(platform, isolate)) continue;
+      if (!success) return 1;
+    }
+    else {
+      // Use all other arguments as names of files to load and run.
+      v8::Local<v8::String> file_name =
+          v8::String::NewFromUtf8(isolate, str).ToLocalChecked();
+      v8::Local<v8::String> source;
+      if (!ReadFile(isolate, str).ToLocal(&source)) {
+        PrintErrorTag();
+        std::cerr << " cannot read file " << str << std::endl;
+
+        continue;
+      }
+      bool success = ExecuteString(isolate, source, file_name, false, true);
+      while (v8::platform::PumpMessageLoop(platform, isolate)) continue;
+      if (!success) return 1;
+    }
+  }
+  return 0;
 }
 
 
@@ -161,18 +170,18 @@ void RunShell(v8::Local<v8::Context> context, v8::Platform* platform) {
   v8::Context::Scope context_scope(context);
   v8::Local<v8::String> name(
       v8::String::NewFromUtf8Literal(context->GetIsolate(), "(shell)"));
-    while (true) {
-        char buffer[kBufferSize];
-        fprintf(stderr, "> ");
-        char* str = fgets(buffer, kBufferSize, stdin);
-        if (str == NULL) break;
-        v8::HandleScope handle_scope(context->GetIsolate());
-        ExecuteString(
-            context->GetIsolate(),
-            v8::String::NewFromUtf8(context->GetIsolate(), str).ToLocalChecked(),
-            name, true, true);
-        while (v8::platform::PumpMessageLoop(platform, context->GetIsolate()))
-            continue;
-    }
-    fprintf(stderr, "\n");
+  while (true) {
+    char buffer[kBufferSize];
+    std::cerr << "> ";
+    char* str = fgets(buffer, kBufferSize, stdin);
+    if (str == NULL) break;
+    v8::HandleScope handle_scope(context->GetIsolate());
+    ExecuteString(
+        context->GetIsolate(),
+        v8::String::NewFromUtf8(context->GetIsolate(), str).ToLocalChecked(),
+        name, true, true);
+    while (v8::platform::PumpMessageLoop(platform, context->GetIsolate()))
+      continue;
+  }
+  std::cerr << std::endl;
 }

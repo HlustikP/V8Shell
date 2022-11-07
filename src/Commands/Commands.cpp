@@ -14,6 +14,16 @@ void PrintCWD() {
   std::cout << path;
 }
 
+void PrintErrorTag(std::ostream& stream) {
+  stream << rang::fg::red << rang::style::bold << "[Error]" 
+    << rang::style::reset << rang::fg::reset;
+}
+
+void PrintWarningTag(std::ostream& stream) {
+  stream << rang::fg::yellow << rang::style::bold << "[Warning]"
+    << rang::style::reset << rang::fg::reset;
+}
+
 // The callback that is invoked by v8 whenever the JavaScript 'print'
 // function is called.  Sends its arguments to stdout separated by
 // semicolons and ending with a newline.
@@ -147,7 +157,8 @@ void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
     fs::path trial_path = RuntimeMemory::current_directoy;
     if (!fs::is_directory(trial_path.append(value))) {
-      std::cerr << "[Error] " << trial_path.generic_string() << " is not a directory" << std::endl;
+      PrintErrorTag();
+      std::cerr << " " << trial_path.generic_string() << " is not a directory" << std::endl;
       PrintCWD();
 
       return;
@@ -155,6 +166,20 @@ void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
     // path::append operates in-place
     RuntimeMemory::current_directoy.append(value);
+  }
+
+  PrintCWD();
+}
+
+void ListFiles(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  for (auto const& dir_entry :
+    std::filesystem::directory_iterator(RuntimeMemory::current_directoy)) {
+    if (dir_entry.is_directory()) {
+      std::cout << rang::fg::cyan;
+    }
+
+    std::cout << dir_entry.path().filename().generic_string() << std::endl;
+    std::cout << rang::fg::reset;
   }
 
   PrintCWD();
