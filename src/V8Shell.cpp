@@ -164,24 +164,27 @@ void RunShell(v8::Local<v8::Context> context, v8::Platform* platform) {
     << v8::V8::GetVersion() << std::endl;
   PrintCWD();
 
-  static const int kBufferSize = 256;
+  static const int kBufferSize = 1024;
+  char buffer[kBufferSize];
 
   // Enter the execution environment before evaluating any code.
   v8::Context::Scope context_scope(context);
   v8::Local<v8::String> name(
       v8::String::NewFromUtf8Literal(context->GetIsolate(), "(shell)"));
   while (true) {
-    char buffer[kBufferSize];
-    std::cerr << "> ";
+    std::cout << "> ";
     char* str = fgets(buffer, kBufferSize, stdin);
     if (str == NULL) break;
+
     v8::HandleScope handle_scope(context->GetIsolate());
+    auto print_expression_eval = true;
+
     ExecuteString(
         context->GetIsolate(),
         v8::String::NewFromUtf8(context->GetIsolate(), str).ToLocalChecked(),
-        name, true, true);
+        name, print_expression_eval, true);
     while (v8::platform::PumpMessageLoop(platform, context->GetIsolate()))
       continue;
   }
-  std::cerr << std::endl;
+  std::cout << std::endl;
 }

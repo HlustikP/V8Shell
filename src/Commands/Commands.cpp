@@ -1,8 +1,11 @@
 #include "Commands.h"
 
 // path + string = path
-auto operator+(fs::path const& lhs, std::string const& rhs) -> fs::path {
-  return fs::path(lhs.generic_string().append(rhs));
+fs::path operator+(fs::path const& lhs, std::string const& rhs) {
+  fs::path result = lhs;
+  result.append(rhs);
+
+  return result;
 }
 
 void SetCWD(fs::path path) {
@@ -155,8 +158,8 @@ void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args) {
     v8::String::Utf8Value str(args.GetIsolate(), args[0]);
     auto value = std::string(ToCString(str));
 
-    fs::path trial_path = RuntimeMemory::current_directoy;
-    if (!fs::is_directory(trial_path.append(value))) {
+    fs::path trial_path = RuntimeMemory::current_directoy + value;
+    if (!fs::is_directory(trial_path)) {
       PrintErrorTag();
       std::cerr << " " << trial_path.generic_string() << " is not a directory" << std::endl;
       PrintCWD();
