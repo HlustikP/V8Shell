@@ -3,7 +3,6 @@
 int main(int argc, char* argv[]) {
   auto platform = SetupV8(argc, argv);
   if (platform == nullptr) {
-
     Commands::PrintErrorTag();
     std::cerr << " Failed to setup V8 VM" << std::endl;
 
@@ -40,7 +39,6 @@ int main(int argc, char* argv[]) {
     result = RunMain(isolate, platform.get(), argc, argv, settings);
     if (settings.run_shell) RunShell(context, platform.get());
   }
-
   Cleanup(isolate, &create_params);
     
   return result;

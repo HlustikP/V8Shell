@@ -78,8 +78,7 @@ void Read(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 
 // The callback that is invoked by v8 whenever the JavaScript 'load'
-// function is called. Loads, compiles and executes its argument
-// JavaScript file.
+// function is called. Loads, compiles and executes its argument JavaScript file.
 void Load(const v8::FunctionCallbackInfo<v8::Value>& args) {
   for (int i = 0; i < args.Length(); i++) {
     v8::HandleScope handle_scope(args.GetIsolate());
@@ -102,7 +101,7 @@ void Load(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 
 // The callback that is invoked by v8 whenever the JavaScript 'quit'
-// function is called.  Quits.
+// function is called. Terminates execution.
 void Quit(const v8::FunctionCallbackInfo<v8::Value>& args) {
   // If not arguments are given args[0] will yield undefined which
   // converts to the integer value 0.
@@ -112,7 +111,6 @@ void Quit(const v8::FunctionCallbackInfo<v8::Value>& args) {
   fflush(stderr);
   exit(exit_code);
 }
-
 
 void Version(const v8::FunctionCallbackInfo<v8::Value>& args) {
   args.GetReturnValue().Set(
@@ -223,8 +221,7 @@ v8::MaybeLocal<v8::String> ReadFile(v8::Isolate* isolate, const char* name) {
 
 // Parses and executes a string within the current v8 context.
 bool ExecuteString(v8::Isolate* isolate, v8::Local<v8::String> source,
-  v8::Local<v8::Value> name, bool print_result,
-  bool report_exceptions) {
+  v8::Local<v8::Value> name, bool print_result, bool report_exceptions) {
   v8::HandleScope handle_scope(isolate);
   v8::TryCatch try_catch(isolate);
   v8::ScriptOrigin origin(isolate, name);
