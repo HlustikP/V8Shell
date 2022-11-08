@@ -1,4 +1,6 @@
-#include "Commands.h"
+#include "../../include/Commands.h"
+
+namespace Commands {
 
 // path + string = path
 fs::path operator+(fs::path const& lhs, std::string const& rhs) {
@@ -12,13 +14,17 @@ void SetCWD(fs::path path) {
   RuntimeMemory::current_directoy = path;
 }
 
+fs::path GetCWD() {
+  return RuntimeMemory::current_directoy;
+}
+
 void PrintCWD() {
   auto path = RuntimeMemory::current_directoy.generic_string();
   std::cout << path;
 }
 
 void PrintErrorTag(std::ostream& stream) {
-  stream << rang::fg::red << rang::style::bold << "[Error]" 
+  stream << rang::fg::red << rang::style::bold << "[Error]"
     << rang::style::reset << rang::fg::reset;
 }
 
@@ -44,8 +50,8 @@ void Print(const v8::FunctionCallbackInfo<v8::Value>& args) {
     std::cout << ToCString(str);
   }
 
-   std::cout << std::endl;
-   PrintCWD();
+  std::cout << std::endl;
+  PrintCWD();
 }
 
 
@@ -101,7 +107,7 @@ void Quit(const v8::FunctionCallbackInfo<v8::Value>& args) {
   // If not arguments are given args[0] will yield undefined which
   // converts to the integer value 0.
   int exit_code =
-      args[0]->Int32Value(args.GetIsolate()->GetCurrentContext()).FromMaybe(0);
+    args[0]->Int32Value(args.GetIsolate()->GetCurrentContext()).FromMaybe(0);
   fflush(stdout);
   fflush(stderr);
   exit(exit_code);
@@ -209,7 +215,7 @@ v8::MaybeLocal<v8::String> ReadFile(v8::Isolate* isolate, const char* name) {
   }
   fclose(file);
   v8::MaybeLocal<v8::String> result = v8::String::NewFromUtf8(
-      isolate, chars, v8::NewStringType::kNormal, static_cast<int>(size));
+    isolate, chars, v8::NewStringType::kNormal, static_cast<int>(size));
 
   delete[] chars;
   return result;
@@ -227,7 +233,7 @@ bool ExecuteString(v8::Isolate* isolate, v8::Local<v8::String> source,
   if (!v8::Script::Compile(context, source, &origin).ToLocal(&script)) {
     // Print errors that happened during compilation.
     if (report_exceptions)
-        ReportException(isolate, &try_catch);
+      ReportException(isolate, &try_catch);
     return false;
   }
   else {
@@ -236,17 +242,17 @@ bool ExecuteString(v8::Isolate* isolate, v8::Local<v8::String> source,
       assert(try_catch.HasCaught());
       // Print errors that happened during execution.
       if (report_exceptions)
-          ReportException(isolate, &try_catch);
+        ReportException(isolate, &try_catch);
       return false;
     }
     else {
       assert(!try_catch.HasCaught());
       if (print_result && !result->IsUndefined()) {
-          // If all went well and the result wasn't undefined then print
-          // the returned value.
-          v8::String::Utf8Value str(isolate, result);
-          std::cout << ToCString(str) << std::endl;
-          PrintCWD();
+        // If all went well and the result wasn't undefined then print
+        // the returned value.
+        v8::String::Utf8Value str(isolate, result);
+        std::cout << ToCString(str) << std::endl;
+        PrintCWD();
       }
       return true;
     }
@@ -267,7 +273,7 @@ void ReportException(v8::Isolate* isolate, v8::TryCatch* try_catch) {
   else {
     // Print (filename):(line number) - (message).
     v8::String::Utf8Value filename(isolate,
-        message->GetScriptOrigin().ResourceName());
+      message->GetScriptOrigin().ResourceName());
     v8::Local<v8::Context> context(isolate->GetCurrentContext());
     const auto* filename_string = ToCString(filename);
     int linenum = message->GetLineNumber(context).FromJust();
@@ -276,9 +282,9 @@ void ReportException(v8::Isolate* isolate, v8::TryCatch* try_catch) {
 
     // Print line of faulty source code.
     v8::String::Utf8Value sourceline(
-        isolate, message->GetSourceLine(context).ToLocalChecked());
+      isolate, message->GetSourceLine(context).ToLocalChecked());
     std::cerr << ToCString(sourceline) << std::endl;
-        
+
     // Print wavy underline
     int start = message->GetStartColumn(context).FromJust();
     for (int i = 0; i < start; i++) {
@@ -306,3 +312,5 @@ void ReportException(v8::Isolate* isolate, v8::TryCatch* try_catch) {
 const char* ToCString(const v8::String::Utf8Value& value) {
   return *value ? *value : "[Error] string conversion failed";
 }
+
+};

@@ -4,7 +4,7 @@ int main(int argc, char* argv[]) {
   auto platform = SetupV8(argc, argv);
   if (platform == nullptr) {
 
-    PrintErrorTag();
+    Commands::PrintErrorTag();
     std::cerr << " Failed to setup V8 VM" << std::endl;
 
     return 1;
@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
   v8::Isolate* isolate = nullptr;
   auto v8_setup_valid = SetupV8Isolate(&create_params, &isolate);
   if (!v8_setup_valid) {
-    PrintErrorTag();
+    Commands::PrintErrorTag();
     std::cerr << " Failed to setup V8 Isolate" << std::endl;
 
     return 1;
@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
     v8::HandleScope handle_scope(isolate);
     v8::Local<v8::Context> context = CreateShellContext(isolate);
     if (context.IsEmpty()) {
-      PrintErrorTag();
+      Commands::PrintErrorTag();
       std::cerr << " Failed to create shell context" << std::endl;
 
       return 1;
@@ -90,17 +90,17 @@ v8::Local<v8::Context> CreateShellContext(v8::Isolate* isolate) {
     v8::Local<v8::ObjectTemplate> global = v8::ObjectTemplate::New(isolate);
 
     // Register c++ hooks to global functions
-    global->Set(isolate, "print", v8::FunctionTemplate::New(isolate, Print));
-    global->Set(isolate, "read", v8::FunctionTemplate::New(isolate, Read));
-    global->Set(isolate, "load", v8::FunctionTemplate::New(isolate, Load));
-    global->Set(isolate, "quit", v8::FunctionTemplate::New(isolate, Quit));
-    global->Set(isolate, "exit", v8::FunctionTemplate::New(isolate, Quit));
-    global->Set(isolate, "version", v8::FunctionTemplate::New(isolate, Version));
-    global->Set(isolate, "cd", v8::FunctionTemplate::New(isolate, ChangeDirectory));
+    global->Set(isolate, "print", v8::FunctionTemplate::New(isolate, Commands::Print));
+    global->Set(isolate, "read", v8::FunctionTemplate::New(isolate, Commands::Read));
+    global->Set(isolate, "load", v8::FunctionTemplate::New(isolate, Commands::Load));
+    global->Set(isolate, "quit", v8::FunctionTemplate::New(isolate, Commands::Quit));
+    global->Set(isolate, "exit", v8::FunctionTemplate::New(isolate, Commands::Quit));
+    global->Set(isolate, "version", v8::FunctionTemplate::New(isolate, Commands::Version));
+    global->Set(isolate, "cd", v8::FunctionTemplate::New(isolate, Commands::ChangeDirectory));
     global->Set(isolate, "changeDirectory", 
-      v8::FunctionTemplate::New(isolate, ChangeDirectory));
-    global->Set(isolate, "ls", v8::FunctionTemplate::New(isolate, ListFiles));
-    global->Set(isolate, "ll", v8::FunctionTemplate::New(isolate, ListFiles));
+      v8::FunctionTemplate::New(isolate, Commands::ChangeDirectory));
+    global->Set(isolate, "ls", v8::FunctionTemplate::New(isolate, Commands::ListFiles));
+    global->Set(isolate, "ll", v8::FunctionTemplate::New(isolate, Commands::ListFiles));
 
     return v8::Context::New(isolate, NULL, global);
 }
@@ -119,7 +119,7 @@ int RunMain(v8::Isolate* isolate, v8::Platform* platform, int argc,
       continue;
     }
     else if (strncmp(str, "--", 2) == 0) {
-      PrintWarningTag();
+      Commands::PrintWarningTag();
       std::cerr << " used unknown flag " << str << std::endl 
         << "Try --help for options" << std::endl;
     }
@@ -131,7 +131,7 @@ int RunMain(v8::Isolate* isolate, v8::Platform* platform, int argc,
       if (!v8::String::NewFromUtf8(isolate, argv[++i]).ToLocal(&source)) {
         return 1;
       }
-      bool success = ExecuteString(isolate, source, file_name, false, true);
+      bool success = Commands::ExecuteString(isolate, source, file_name, false, true);
       while (v8::platform::PumpMessageLoop(platform, isolate)) continue;
       if (!success) return 1;
     }
@@ -140,13 +140,13 @@ int RunMain(v8::Isolate* isolate, v8::Platform* platform, int argc,
       v8::Local<v8::String> file_name =
           v8::String::NewFromUtf8(isolate, str).ToLocalChecked();
       v8::Local<v8::String> source;
-      if (!ReadFile(isolate, str).ToLocal(&source)) {
-        PrintErrorTag();
+      if (!Commands::ReadFile(isolate, str).ToLocal(&source)) {
+        Commands::PrintErrorTag();
         std::cerr << " cannot read file " << str << std::endl;
 
         continue;
       }
-      bool success = ExecuteString(isolate, source, file_name, false, true);
+      bool success = Commands::ExecuteString(isolate, source, file_name, false, true);
       while (v8::platform::PumpMessageLoop(platform, isolate)) continue;
       if (!success) return 1;
     }
@@ -158,11 +158,11 @@ int RunMain(v8::Isolate* isolate, v8::Platform* platform, int argc,
 // The read-eval-execute loop of the shell.
 void RunShell(v8::Local<v8::Context> context, v8::Platform* platform) {
   auto path = fs::current_path();
-  SetCWD(path);
+  Commands::SetCWD(path);
 
   std::cout << "[V8Shell " << current_version << "] V8 version " 
     << v8::V8::GetVersion() << std::endl;
-  PrintCWD();
+  Commands::PrintCWD();
 
   static const int kBufferSize = 1024;
   char buffer[kBufferSize];
@@ -179,7 +179,7 @@ void RunShell(v8::Local<v8::Context> context, v8::Platform* platform) {
     v8::HandleScope handle_scope(context->GetIsolate());
     auto print_expression_eval = true;
 
-    ExecuteString(
+    Commands::ExecuteString(
         context->GetIsolate(),
         v8::String::NewFromUtf8(context->GetIsolate(), str).ToLocalChecked(),
         name, print_expression_eval, true);

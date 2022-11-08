@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Commands/Commands.h"
+#include "Commands.h"
 
 struct Settings {
   bool run_shell;

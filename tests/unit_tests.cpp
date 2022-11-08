@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 
-#include "../src/Commands/Commands.h"
+#include "Commands.h"
 
-TEST(HelloTest, BasicAssertions) {
-  SetCWD("");
+TEST(Commands, GettingSettingCWD) {
+  const auto path = fs::current_path();
+  Commands::SetCWD(path);
 
-  EXPECT_STRNE("hello", "world");
-  EXPECT_EQ(7 * 6, 42);
+  EXPECT_EQ(path, Commands::GetCWD());
 }
