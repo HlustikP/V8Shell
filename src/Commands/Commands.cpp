@@ -10,32 +10,37 @@ fs::path operator+(fs::path const& lhs, std::string const& rhs) {
   return result;
 }
 
+/** Setter for the current working directory of the shell. */
 void SetCWD(fs::path path) {
   RuntimeMemory::current_directoy = path;
 }
 
+/** Getter for the current working directory of the shell. */
 fs::path GetCWD() {
   return RuntimeMemory::current_directoy;
 }
 
+/** Prints colorized cwd to standard out. */
 void PrintCWD() {
   auto path = RuntimeMemory::current_directoy.generic_string();
   std::cout << rang::fg::green << path << "> " << rang::fg::reset;
 }
 
+/** Prints a colorized error tag. Used to prepend error messages. */
 void PrintErrorTag(std::ostream& stream) {
   stream << rang::fg::red << rang::style::bold << "[Error]"
     << rang::style::reset << rang::fg::reset;
 }
 
+/** Prints a colorized warning tag. Used to prepend warning messages. */
 void PrintWarningTag(std::ostream& stream) {
   stream << rang::fg::yellow << rang::style::bold << "[Warning]"
     << rang::style::reset << rang::fg::reset;
 }
 
-// The callback that is invoked by v8 whenever the JavaScript 'print'
-// function is called.  Sends its arguments to stdout separated by
-// semicolons and ending with a newline.
+/** The callback that is invoked by v8 whenever the JavaScript 'print'
+*   function is called. Sends its arguments to stdout separated by
+*   semicolons and ending with a newline. */
 void Print(const v8::FunctionCallbackInfo<v8::Value>& args) {
   bool first = true;
   for (int i = 0; i < args.Length(); i++) {
@@ -53,10 +58,9 @@ void Print(const v8::FunctionCallbackInfo<v8::Value>& args) {
   std::cout << std::endl;
 }
 
-
-// The callback that is invoked by v8 whenever the JavaScript 'read'
-// function is called.  This function loads the content of the file named in
-// the argument into a JavaScript string.
+/** The callback that is invoked by v8 whenever the JavaScript 'read'
+*   function is called. This function loads the content of the file passed
+*   as a string in argument 0 into a JavaScript string. */
 void Read(const v8::FunctionCallbackInfo<v8::Value>& args) {
   if (args.Length() != 1) {
     args.GetIsolate()->ThrowError("[Error] Bad parameters");
@@ -64,7 +68,7 @@ void Read(const v8::FunctionCallbackInfo<v8::Value>& args) {
   }
   v8::String::Utf8Value file(args.GetIsolate(), args[0]);
   if (*file == NULL) {
-    args.GetIsolate()->ThrowError("[Error] No file name given");
+    args.GetIsolate()->ThrowError("[Error] No file name passed");
     return;
   }
   v8::Local<v8::String> source;
@@ -76,9 +80,9 @@ void Read(const v8::FunctionCallbackInfo<v8::Value>& args) {
   args.GetReturnValue().Set(source);
 }
 
-// The callback that is invoked by v8 whenever the JavaScript 'load'
-// function is called. Loads, compiles and executes its argument JavaScript file.
-void Load(const v8::FunctionCallbackInfo<v8::Value>& args) {
+/** The callback that is invoked by v8 whenever the JavaScript 'execute'
+*   function is called. Loads, parses, compiles and executes its argument JavaScript file. */
+void Execute(const v8::FunctionCallbackInfo<v8::Value>& args) {
   for (int i = 0; i < args.Length(); i++) {
     v8::HandleScope handle_scope(args.GetIsolate());
     v8::String::Utf8Value file(args.GetIsolate(), args[i]);
@@ -98,12 +102,11 @@ void Load(const v8::FunctionCallbackInfo<v8::Value>& args) {
   }
 }
 
-
-// The callback that is invoked by v8 whenever the JavaScript 'quit'
-// function is called. Terminates execution.
+/** The callback that is invoked by v8 whenever the JavaScript 'quit'
+*   function is called. Terminates execution. */
 void Quit(const v8::FunctionCallbackInfo<v8::Value>& args) {
   // If not arguments are given args[0] will yield undefined which
-  // converts to the integer value 0.
+  // is coerced into the integer value 0.
   int exit_code =
     args[0]->Int32Value(args.GetIsolate()->GetCurrentContext()).FromMaybe(0);
   fflush(stdout);
@@ -111,14 +114,17 @@ void Quit(const v8::FunctionCallbackInfo<v8::Value>& args) {
   exit(exit_code);
 }
 
+/** The callback that is invoked by v8 whenever the JavaScript 'version'
+ *  function is called. Returns a string with the version of the embedded v8 engine. */
 void Version(const v8::FunctionCallbackInfo<v8::Value>& args) {
   args.GetReturnValue().Set(v8::String::NewFromUtf8(args.GetIsolate(),
     v8::V8::GetVersion()).ToLocalChecked());
 }
 
-// Changes the current directory to operate on
-// Inputting a number will go up this many parent directories
-// Inputting a string will attempt to enter that subdirectory
+/** The callback that is invoked by v8 whenever the JavaScript 'cd'
+*   function is called. Changes the current directory to operate on.
+*   Inputting a number will go up this many parent directories and
+*   inputting a string will attempt to enter a subdirectory. */
 void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args) {
   if (args.Length() == 0) {
     PrintCWD();
@@ -173,8 +179,10 @@ void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args) {
   }
 }
 
-// ls(printToStd = true), ls() -> returns void and prints to std
-// ls(printToStd = false) -> returns file list, doesnt print to std
+/** The callback that is invoked by v8 whenever the JavaScript 'ls'
+ *  function is called. Returns void and prints the content of the
+ *  current working directory to standard out.
+ *  Returns an array of directory entry objects if 'true' is passed. */
 void ListFiles(const v8::FunctionCallbackInfo<v8::Value>& args) {
   bool print_to_std = true;
   v8::HandleScope handle_scope(args.GetIsolate());
@@ -236,7 +244,7 @@ void ListFiles(const v8::FunctionCallbackInfo<v8::Value>& args) {
   }
 }
 
-// Reads a file into a v8 string.
+/** Reads the content of a file into a v8 string. */
 v8::MaybeLocal<v8::String> ReadFile(v8::Isolate* isolate, const char* name) {
   FILE* file = nullptr;
   fopen_s(&file, name, "rb");
@@ -263,7 +271,7 @@ v8::MaybeLocal<v8::String> ReadFile(v8::Isolate* isolate, const char* name) {
   return result;
 }
 
-// Parses and executes a string within the current v8 context.
+/** Parses and executes a string within the current v8 context. */
 bool ExecuteString(v8::Isolate* isolate, v8::Local<v8::String> source,
   v8::Local<v8::Value> name, bool print_result, bool report_exceptions) {
   v8::HandleScope handle_scope(isolate);
@@ -303,7 +311,8 @@ bool ExecuteString(v8::Isolate* isolate, v8::Local<v8::String> source,
   }
 }
 
-// Runs a v8 stack trace to get what lead to the exception
+/** Runs a v8 stack trace and reports the exception together with
+*   the code that caused it. */
 void ReportException(v8::Isolate* isolate, v8::TryCatch* try_catch) {
   v8::HandleScope handle_scope(isolate);
   v8::String::Utf8Value exception(isolate, try_catch->Exception());
@@ -352,7 +361,7 @@ void ReportException(v8::Isolate* isolate, v8::TryCatch* try_catch) {
   }
 }
 
-// Extracts the underlying C string from a V8 Utf8Value
+/** Extracts the underlying C string from a v8 Utf8Value. */
 const char* ToCString(const v8::String::Utf8Value& value) {
   return *value ? *value : "[Error] string conversion failed";
 }

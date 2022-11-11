@@ -1,6 +1,12 @@
 cmake_minimum_required (VERSION 3.8)
 
-project (V8Shell)
+# Enforce new versioning mechanics
+if (${CMAKE_VERSION} VERSION_GREATER 3.25.0) 
+    cmake_policy(SET CMP<0048> NEW)
+endif()
+
+project (V8Shell VERSION 0.1.0)
+include (CPack)
 
 include(FetchContent)
 set(gtest_force_shared_crt)

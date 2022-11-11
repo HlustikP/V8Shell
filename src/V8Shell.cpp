@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
   return result;
 }
 
-// Setup the V8 VM, returns nullptr on failure
+/** Setup the V8 VM, returns nullptr on failure. */
 std::unique_ptr<v8::Platform> SetupV8(int argc, char* argv[]) {
     v8::V8::InitializeICUDefaultLocation(argv[0]);
     v8::V8::InitializeExternalStartupData(argv[0]);
@@ -61,7 +61,7 @@ std::unique_ptr<v8::Platform> SetupV8(int argc, char* argv[]) {
     return std::move(platform);
 }
 
-// Setup the V8 Isolate
+/** Setup the V8 Isolate. */
 bool SetupV8Isolate(v8::Isolate::CreateParams* create_params, v8::Isolate** isolate) {
     create_params->array_buffer_allocator =
         v8::ArrayBuffer::Allocator::NewDefaultAllocator();
@@ -74,7 +74,7 @@ bool SetupV8Isolate(v8::Isolate::CreateParams* create_params, v8::Isolate** isol
     return true;
 }
 
-// Free memory held by V8
+/** Free memory held by V8. */
 void Cleanup(v8::Isolate* isolate, v8::Isolate::CreateParams* create_params) {
     isolate->Dispose();
     v8::V8::Dispose();
@@ -82,7 +82,7 @@ void Cleanup(v8::Isolate* isolate, v8::Isolate::CreateParams* create_params) {
     delete create_params->array_buffer_allocator;
 }
 
-// Creates a new execution environment containing the built-in functions.
+/** Creates a new execution environment containing the built-in functions. */
 v8::Local<v8::Context> CreateShellContext(v8::Isolate* isolate) {
     // Create a template for the global object.
     v8::Local<v8::ObjectTemplate> global = v8::ObjectTemplate::New(isolate);
@@ -90,7 +90,7 @@ v8::Local<v8::Context> CreateShellContext(v8::Isolate* isolate) {
     // Register c++ hooks to global functions
     global->Set(isolate, "print", v8::FunctionTemplate::New(isolate, Commands::Print));
     global->Set(isolate, "read", v8::FunctionTemplate::New(isolate, Commands::Read));
-    global->Set(isolate, "load", v8::FunctionTemplate::New(isolate, Commands::Load));
+    global->Set(isolate, "execute", v8::FunctionTemplate::New(isolate, Commands::Execute));
     global->Set(isolate, "quit", v8::FunctionTemplate::New(isolate, Commands::Quit));
     global->Set(isolate, "exit", v8::FunctionTemplate::New(isolate, Commands::Quit));
     global->Set(isolate, "version", v8::FunctionTemplate::New(isolate, Commands::Version));
@@ -103,7 +103,7 @@ v8::Local<v8::Context> CreateShellContext(v8::Isolate* isolate) {
     return v8::Context::New(isolate, NULL, global);
 }
 
-// Process remaining command line arguments and execute files
+/** Process remaining command line arguments and execute files. */
 int RunMain(v8::Isolate* isolate, v8::Platform* platform, int argc,
   char* argv[], Settings& settings) {
   for (int i = 1; i < argc; i++) {
@@ -152,7 +152,7 @@ int RunMain(v8::Isolate* isolate, v8::Platform* platform, int argc,
   return 0;
 }
 
-// The read-eval-execute loop of the shell.
+/** The read-eval-execute loop of the shell. */
 void RunShell(v8::Local<v8::Context> context, v8::Platform* platform) {
   auto path = fs::current_path();
   Commands::SetCWD(path);

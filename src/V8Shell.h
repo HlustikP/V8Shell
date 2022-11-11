@@ -6,7 +6,7 @@ struct Settings {
   bool run_shell;
 };
 
-const auto current_version = "0.0.0";
+const auto current_version = "0.1.0";
 
 std::unique_ptr<v8::Platform> SetupV8(int argc, char* argv[]);
 bool SetupV8Isolate(v8::Isolate::CreateParams* create_params, v8::Isolate** isolate);
