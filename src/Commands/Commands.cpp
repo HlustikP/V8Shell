@@ -20,7 +20,7 @@ fs::path GetCWD() {
 
 void PrintCWD() {
   auto path = RuntimeMemory::current_directoy.generic_string();
-  std::cout << path;
+  std::cout << rang::fg::green << path << "> " << rang::fg::reset;
 }
 
 void PrintErrorTag(std::ostream& stream) {
@@ -51,7 +51,6 @@ void Print(const v8::FunctionCallbackInfo<v8::Value>& args) {
   }
 
   std::cout << std::endl;
-  PrintCWD();
 }
 
 
@@ -113,8 +112,8 @@ void Quit(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 
 void Version(const v8::FunctionCallbackInfo<v8::Value>& args) {
-  args.GetReturnValue().Set(
-    v8::String::NewFromUtf8(args.GetIsolate(), v8::V8::GetVersion()).ToLocalChecked());
+  args.GetReturnValue().Set(v8::String::NewFromUtf8(args.GetIsolate(),
+    v8::V8::GetVersion()).ToLocalChecked());
 }
 
 // Changes the current directory to operate on
@@ -128,14 +127,14 @@ void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args) {
   }
 
   v8::HandleScope handle_scope(args.GetIsolate());
+  auto* isolate = args.GetIsolate();
 
   if (args[0]->IsNumber()) {
-    const auto js_value = args[0]->Int32Value(args.GetIsolate()->GetCurrentContext());
+    const auto js_value = args[0]->Int32Value(isolate->GetCurrentContext());
 
     if (js_value.IsNothing()) {
       args.GetIsolate()->ThrowError("[Error] Cannot deduce an argument value");
       std::cout << std::endl;
-      PrintCWD();
 
       return;
     }
@@ -149,24 +148,22 @@ void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args) {
   }
 
   if (args[0]->IsString()) {
-    const auto js_value = args[0]->ToString(args.GetIsolate()->GetCurrentContext());
+    const auto js_value = args[0]->ToString(isolate->GetCurrentContext());
 
     if (js_value.IsEmpty()) {
-      args.GetIsolate()->ThrowError("[Error] Cannot deduce an argument value");
+      isolate->ThrowError("[Error] Cannot deduce an argument value");
       std::cout << std::endl;
-      PrintCWD();
 
       return;
     }
 
-    v8::String::Utf8Value str(args.GetIsolate(), args[0]);
+    v8::String::Utf8Value str(isolate, args[0]);
     auto value = std::string(ToCString(str));
 
     fs::path trial_path = RuntimeMemory::current_directoy + value;
     if (!fs::is_directory(trial_path)) {
       PrintErrorTag();
       std::cerr << " " << trial_path.generic_string() << " is not a directory" << std::endl;
-      PrintCWD();
 
       return;
     }
@@ -174,22 +171,69 @@ void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args) {
     // path::append operates in-place
     RuntimeMemory::current_directoy.append(value);
   }
-
-  PrintCWD();
 }
 
+// ls(printToStd = true), ls() -> returns void and prints to std
+// ls(printToStd = false) -> returns file list, doesnt print to std
 void ListFiles(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  bool print_to_std = true;
+  v8::HandleScope handle_scope(args.GetIsolate());
+  auto* isolate = args.GetIsolate();
+
+  if (args.Length() != 0) {
+    if (args[0]->IsBoolean() && !(args[0]->ToBoolean(isolate)->BooleanValue(isolate))) {
+      print_to_std = false;
+    }
+  }
+  
+  v8::Local<v8::Array> result = v8::Array::New(isolate, 3);
+  auto result_index = 0;
+
   for (auto const& dir_entry :
-    std::filesystem::directory_iterator(RuntimeMemory::current_directoy)) {
+        std::filesystem::directory_iterator(RuntimeMemory::current_directoy)) {
+    const auto filename = dir_entry.path().filename().generic_string();
+
     if (dir_entry.is_directory()) {
-      std::cout << rang::fg::cyan;
+      if (print_to_std) {
+        std::cout << rang::fg::cyan;
+      } else {
+        auto object = v8::Object::New(isolate);
+        object->Set(isolate->GetCurrentContext(),
+          v8::String::NewFromUtf8(isolate, "isDirectory").ToLocalChecked(),
+          v8::Boolean::New(isolate, true));
+
+        object->Set(isolate->GetCurrentContext(),
+        v8::String::NewFromUtf8(isolate, "filename").ToLocalChecked(),
+            v8::String::NewFromUtf8(isolate, filename.c_str()).ToLocalChecked());
+
+        result->Set(isolate->GetCurrentContext(), result_index, object);
+        result_index++;
+      }
     }
 
-    std::cout << dir_entry.path().filename().generic_string() << std::endl;
-    std::cout << rang::fg::reset;
+    if (print_to_std) {
+      std::cout << filename << std::endl;
+      std::cout << rang::fg::reset;
+    } else {
+      auto object = v8::Object::New(isolate);
+      object->Set(
+          isolate->GetCurrentContext(),
+          v8::String::NewFromUtf8(isolate, "isDirectory").ToLocalChecked(),
+          v8::Boolean::New(isolate, false));
+
+      object->Set(
+          isolate->GetCurrentContext(),
+          v8::String::NewFromUtf8(isolate, "filename").ToLocalChecked(),
+          v8::String::NewFromUtf8(isolate, filename.c_str()).ToLocalChecked());
+
+      result->Set(isolate->GetCurrentContext(), result_index, object);
+      result_index++;
+    }
   }
 
-  PrintCWD();
+  if (!print_to_std) {
+    args.GetReturnValue().Set(result);
+  }
 }
 
 // Reads a file into a v8 string.
@@ -227,6 +271,7 @@ bool ExecuteString(v8::Isolate* isolate, v8::Local<v8::String> source,
   v8::ScriptOrigin origin(isolate, name);
   v8::Local<v8::Context> context(isolate->GetCurrentContext());
   v8::Local<v8::Script> script;
+
   if (!v8::Script::Compile(context, source, &origin).ToLocal(&script)) {
     // Print errors that happened during compilation.
     if (report_exceptions)
@@ -244,13 +289,15 @@ bool ExecuteString(v8::Isolate* isolate, v8::Local<v8::String> source,
     }
     else {
       assert(!try_catch.HasCaught());
-      if (print_result && !result->IsUndefined()) {
-        // If all went well and the result wasn't undefined then print
-        // the returned value.
-        v8::String::Utf8Value str(isolate, result);
-        std::cout << ToCString(str) << std::endl;
+      if (print_result) {
+        if (!result->IsUndefined()) {
+          // If all went well and the result wasn't undefined then print
+          // the returned value.
+          v8::String::Utf8Value str(isolate, result);
+          std::cout << ToCString(str) << std::endl;
+        } 
         PrintCWD();
-      }
+      } 
       return true;
     }
   }

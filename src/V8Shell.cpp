@@ -152,7 +152,6 @@ int RunMain(v8::Isolate* isolate, v8::Platform* platform, int argc,
   return 0;
 }
 
-
 // The read-eval-execute loop of the shell.
 void RunShell(v8::Local<v8::Context> context, v8::Platform* platform) {
   auto path = fs::current_path();
@@ -170,7 +169,6 @@ void RunShell(v8::Local<v8::Context> context, v8::Platform* platform) {
   v8::Local<v8::String> name(
       v8::String::NewFromUtf8Literal(context->GetIsolate(), "(shell)"));
   while (true) {
-    std::cout << "> ";
     char* str = fgets(buffer, kBufferSize, stdin);
     if (str == NULL) break;
 

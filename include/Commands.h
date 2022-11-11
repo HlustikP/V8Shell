@@ -9,13 +9,7 @@
 #include <filesystem>
 
 #include "libplatform/libplatform.h"
-#include "v8-context.h"
-#include "v8-exception.h"
-#include "v8-initialization.h"
-#include "v8-isolate.h"
-#include "v8-local-handle.h"
-#include "v8-script.h"
-#include "v8-template.h"
+#include "v8.h"
 
 #include "console.hpp"
 
