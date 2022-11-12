@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
 #include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -41,6 +45,8 @@ void DeleteFile(const v8::FunctionCallbackInfo<v8::Value>& args);
 void CreateDirectory(const v8::FunctionCallbackInfo<v8::Value>& args);
 void CreateFile(const v8::FunctionCallbackInfo<v8::Value>& args);
 void Help(const v8::FunctionCallbackInfo<v8::Value>& args);
+void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args);
+void StartProcess(const v8::FunctionCallbackInfo<v8::Value>& args);
 
 // Helper functions
 v8::MaybeLocal<v8::String> ReadFile(v8::Isolate* isolate, const char* name);

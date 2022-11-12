@@ -11,14 +11,10 @@ fs::path operator+(fs::path const& lhs, std::string const& rhs) {
 }
 
 /** Setter for the current working directory of the shell. */
-void SetCWD(fs::path path) {
-  RuntimeMemory::current_directoy = path;
-}
+void SetCWD(fs::path path) { RuntimeMemory::current_directoy = path; }
 
 /** Getter for the current working directory of the shell. */
-fs::path GetCWD() {
-  return RuntimeMemory::current_directoy;
-}
+fs::path GetCWD() { return RuntimeMemory::current_directoy; }
 
 /** Prints colorized cwd to standard out. */
 void PrintCWD() {
@@ -29,26 +25,25 @@ void PrintCWD() {
 /** Prints a colorized error tag. Used to prepend error messages. */
 void PrintErrorTag(std::ostream& stream) {
   stream << rang::fg::red << rang::style::bold << "[Error]"
-    << rang::style::reset << rang::fg::reset;
+         << rang::style::reset << rang::fg::reset;
 }
 
 /** Prints a colorized warning tag. Used to prepend warning messages. */
 void PrintWarningTag(std::ostream& stream) {
   stream << rang::fg::yellow << rang::style::bold << "[Warning]"
-    << rang::style::reset << rang::fg::reset;
+         << rang::style::reset << rang::fg::reset;
 }
 
 /** The callback that is invoked by v8 whenever the JavaScript 'print'
-*   function is called. Sends its arguments to stdout separated by
-*   semicolons and ending with a newline. */
+ *   function is called. Sends its arguments to stdout separated by
+ *   semicolons and ending with a newline. */
 void Print(const v8::FunctionCallbackInfo<v8::Value>& args) {
   bool first = true;
   for (int i = 0; i < args.Length(); i++) {
     v8::HandleScope handle_scope(args.GetIsolate());
     if (first) {
       first = false;
-    }
-    else {
+    } else {
       std::cout << ";";
     }
     v8::String::Utf8Value str(args.GetIsolate(), args[i]);
@@ -59,8 +54,8 @@ void Print(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 
 /** The callback that is invoked by v8 whenever the JavaScript 'read'
-*   function is called. This function loads the content of the file passed
-*   as a string in argument 0 into a JavaScript string. */
+ *   function is called. This function loads the content of the file passed
+ *   as a string in argument 0 into a JavaScript string. */
 void Read(const v8::FunctionCallbackInfo<v8::Value>& args) {
   if (args.Length() != 1) {
     args.GetIsolate()->ThrowError("[Error] Bad parameters");
@@ -81,7 +76,8 @@ void Read(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 
 /** The callback that is invoked by v8 whenever the JavaScript 'execute'
-*   function is called. Loads, parses, compiles and executes its argument JavaScript file. */
+ *   function is called. Loads, parses, compiles and executes its argument
+ * JavaScript file. */
 void Execute(const v8::FunctionCallbackInfo<v8::Value>& args) {
   for (int i = 0; i < args.Length(); i++) {
     v8::HandleScope handle_scope(args.GetIsolate());
@@ -103,28 +99,30 @@ void Execute(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 
 /** The callback that is invoked by v8 whenever the JavaScript 'quit'
-*   function is called. Terminates execution. */
+ *   function is called. Terminates execution. */
 void Quit(const v8::FunctionCallbackInfo<v8::Value>& args) {
   // If not arguments are given args[0] will yield undefined which
   // is coerced into the integer value 0.
   int exit_code =
-    args[0]->Int32Value(args.GetIsolate()->GetCurrentContext()).FromMaybe(0);
+      args[0]->Int32Value(args.GetIsolate()->GetCurrentContext()).FromMaybe(0);
   fflush(stdout);
   fflush(stderr);
   exit(exit_code);
 }
 
 /** The callback that is invoked by v8 whenever the JavaScript 'version'
- *  function is called. Returns a string with the version of the embedded v8 engine. */
+ *  function is called. Returns a string with the version of the embedded v8
+ * engine. */
 void Version(const v8::FunctionCallbackInfo<v8::Value>& args) {
-  args.GetReturnValue().Set(v8::String::NewFromUtf8(args.GetIsolate(),
-    v8::V8::GetVersion()).ToLocalChecked());
+  args.GetReturnValue().Set(
+      v8::String::NewFromUtf8(args.GetIsolate(), v8::V8::GetVersion())
+          .ToLocalChecked());
 }
 
 /** The callback that is invoked by v8 whenever the JavaScript 'cd'
-*   function is called. Changes the current directory to operate on.
-*   Inputting a number will go up this many parent directories and
-*   inputting a string will attempt to enter a subdirectory. */
+ *   function is called. Changes the current directory to operate on.
+ *   Inputting a number will go up this many parent directories and
+ *   inputting a string will attempt to enter a subdirectory. */
 void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args) {
   if (args.Length() == 0) {
     PrintCWD();
@@ -149,7 +147,8 @@ void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args) {
     const auto num = abs(js_value.FromJust());
 
     for (auto i = 0; i < num; i++) {
-      RuntimeMemory::current_directoy = RuntimeMemory::current_directoy.parent_path();
+      RuntimeMemory::current_directoy =
+          RuntimeMemory::current_directoy.parent_path();
     }
   }
 
@@ -169,7 +168,8 @@ void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args) {
     fs::path trial_path = RuntimeMemory::current_directoy + value;
     if (!fs::is_directory(trial_path)) {
       PrintErrorTag();
-      std::cerr << " " << trial_path.generic_string() << " is not a directory" << std::endl;
+      std::cerr << " " << trial_path.generic_string() << " is not a directory"
+                << std::endl;
 
       return;
     }
@@ -189,16 +189,17 @@ void ListFiles(const v8::FunctionCallbackInfo<v8::Value>& args) {
   auto* isolate = args.GetIsolate();
 
   if (args.Length() != 0) {
-    if (args[0]->IsBoolean() && !(args[0]->ToBoolean(isolate)->BooleanValue(isolate))) {
+    if (args[0]->IsBoolean() &&
+        !(args[0]->ToBoolean(isolate)->BooleanValue(isolate))) {
       print_to_std = false;
     }
   }
-  
+
   v8::Local<v8::Array> result = v8::Array::New(isolate, 3);
   auto result_index = 0;
 
   for (auto const& dir_entry :
-        std::filesystem::directory_iterator(RuntimeMemory::current_directoy)) {
+       std::filesystem::directory_iterator(RuntimeMemory::current_directoy)) {
     const auto filename = dir_entry.path().filename().generic_string();
 
     if (dir_entry.is_directory()) {
@@ -206,13 +207,16 @@ void ListFiles(const v8::FunctionCallbackInfo<v8::Value>& args) {
         std::cout << rang::fg::cyan;
       } else {
         auto object = v8::Object::New(isolate);
-        object->Set(isolate->GetCurrentContext(),
-          v8::String::NewFromUtf8(isolate, "isDirectory").ToLocalChecked(),
-          v8::Boolean::New(isolate, true));
+        object->Set(
+            isolate->GetCurrentContext(),
+            v8::String::NewFromUtf8(isolate, "isDirectory").ToLocalChecked(),
+            v8::Boolean::New(isolate, true));
 
-        object->Set(isolate->GetCurrentContext(),
-        v8::String::NewFromUtf8(isolate, "filename").ToLocalChecked(),
-            v8::String::NewFromUtf8(isolate, filename.c_str()).ToLocalChecked());
+        object->Set(
+            isolate->GetCurrentContext(),
+            v8::String::NewFromUtf8(isolate, "filename").ToLocalChecked(),
+            v8::String::NewFromUtf8(isolate, filename.c_str())
+                .ToLocalChecked());
 
         result->Set(isolate->GetCurrentContext(), result_index, object);
         result_index++;
@@ -241,6 +245,59 @@ void ListFiles(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
   if (!print_to_std) {
     args.GetReturnValue().Set(result);
+  }
+}
+
+/** Creates a child process */
+void StartProcess(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  auto* isolate = args.GetIsolate();
+
+  if (!(args[0]->IsString())) {
+    PrintErrorTag();
+    std::cerr << " No executable filename or path passes!" << std::endl;
+
+    return;
+  }
+
+  v8::String::Utf8Value str(isolate, args[0]);
+
+  // C style shortcut in the line above si.cb = sizeof(ci)
+  STARTUPINFO si = {sizeof(si)};
+
+  PROCESS_INFORMATION pi;
+
+  auto OK = CreateProcessA(nullptr,
+    const_cast<char*>(ToCString(str)),
+    nullptr,
+    nullptr,
+    FALSE,
+    0,                     
+    NULL, 
+    NULL,        
+    &si, 
+    &pi);
+
+  if (OK) {  // check if Process is created
+    std::cout << "Process with PID " << pi.dwProcessId
+              << " is currently running..." << std::endl;
+
+    // Wait utill Process object is signaled (child process terminates)
+    auto status = WaitForSingleObject(pi.hProcess, INFINITE);
+
+    if (status == WAIT_OBJECT_0) {
+      std::cout << "Process " << pi.dwProcessId << " ended execution!"
+                << std::endl;
+    }
+
+    CloseHandle(pi.hProcess);  // Handles must be explicitly closed if not
+                                // parent process will hold on to it even if
+                                // child process is terminated.
+    CloseHandle(pi.hThread);
+
+  } else {
+    PrintErrorTag();
+    std::cerr << " " << std::system_category().message(GetLastError())
+              << std::endl;
   }
 }
 
@@ -349,11 +406,10 @@ void ReportException(v8::Isolate* isolate, v8::TryCatch* try_catch) {
     }
     std::cerr << std::endl;
 
-    v8::Local<v8::Value> stack_trace_string;
-    if (try_catch->StackTrace(context).ToLocal(&stack_trace_string) &&
-      stack_trace_string->IsString() &&
-      stack_trace_string.As<v8::String>()->Length() > 0) {
-      v8::String::Utf8Value stack_trace(isolate, stack_trace_string);
+    v8::Local<v8::Value> stack_trace;
+    if (try_catch->StackTrace(context).ToLocal(&stack_trace) &&
+        stack_trace->IsString() && stack_trace.As<v8::String>()->Length() > 0) {
+      v8::String::Utf8Value stack_trace(isolate, stack_trace);
       std::cerr << ToCString(stack_trace) << std::endl;
     }
 

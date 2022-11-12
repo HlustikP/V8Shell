@@ -99,6 +99,8 @@ v8::Local<v8::Context> CreateShellContext(v8::Isolate* isolate) {
       v8::FunctionTemplate::New(isolate, Commands::ChangeDirectory));
     global->Set(isolate, "ls", v8::FunctionTemplate::New(isolate, Commands::ListFiles));
     global->Set(isolate, "ll", v8::FunctionTemplate::New(isolate, Commands::ListFiles));
+    global->Set(isolate, "runSync", v8::FunctionTemplate::New(isolate, Commands::StartProcessSync));
+    global->Set(isolate, "run", v8::FunctionTemplate::New(isolate, Commands::StartProcess));
 
     return v8::Context::New(isolate, NULL, global);
 }
@@ -130,6 +132,7 @@ int RunMain(v8::Isolate* isolate, v8::Platform* platform, int argc,
         return 1;
       }
       bool success = Commands::ExecuteString(isolate, source, file_name, false, true);
+      settings.run_shell = false;
       while (v8::platform::PumpMessageLoop(platform, isolate)) continue;
       if (!success) return 1;
     }
@@ -179,6 +182,7 @@ void RunShell(v8::Local<v8::Context> context, v8::Platform* platform) {
         context->GetIsolate(),
         v8::String::NewFromUtf8(context->GetIsolate(), str).ToLocalChecked(),
         name, print_expression_eval, true);
+
     while (v8::platform::PumpMessageLoop(platform, context->GetIsolate()))
       continue;
   }
