@@ -100,7 +100,6 @@ v8::Local<v8::Context> CreateShellContext(v8::Isolate* isolate) {
     global->Set(isolate, "ls", v8::FunctionTemplate::New(isolate, Commands::ListFiles));
     global->Set(isolate, "ll", v8::FunctionTemplate::New(isolate, Commands::ListFiles));
     global->Set(isolate, "runSync", v8::FunctionTemplate::New(isolate, Commands::StartProcessSync));
-    global->Set(isolate, "run", v8::FunctionTemplate::New(isolate, Commands::StartProcess));
 
     return v8::Context::New(isolate, NULL, global);
 }

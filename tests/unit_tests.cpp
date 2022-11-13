@@ -2,7 +2,7 @@
 
 #include "Commands.h"
 
-TEST(Commands, GettingSettingCWD) {
+TEST(Commands, GettingSettingsCWD) {
   const auto path = fs::current_path();
   Commands::SetCWD(path);
 

@@ -248,26 +248,71 @@ void ListFiles(const v8::FunctionCallbackInfo<v8::Value>& args) {
   }
 }
 
-/** Creates a child process */
-void StartProcess(const v8::FunctionCallbackInfo<v8::Value>& args) {
+/** The callback that is invoked by v8 whenever the JavaScript 'runSync'
+*   function is called. Creates a child process and halts execution 
+*   of the shell until the child process terminates.
+*   First argument is the application to be executed which is first
+*   looked for in the current executable's directory, otherwise the
+*   PATH is searched. Second argument is an optional additional
+*   object with parameeters to be passed to the executable.
+*   Third argument is controls verbosity of this functions. */
+void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args) {
   auto* isolate = args.GetIsolate();
+  auto* context =  &(isolate->GetCurrentContext());
+  bool verbose = true;
 
   if (!(args[0]->IsString())) {
     PrintErrorTag();
-    std::cerr << " No executable filename or path passes!" << std::endl;
+    std::cerr << " No executable filename or path passed!" << std::endl;
 
     return;
   }
 
+  std::string params_appendage = "";
+
+  // Format additional parameters
+  if (args.Length() > 1 && (args[1]->IsObject())) {
+    auto object = args[1]->ToObject(isolate->GetCurrentContext()).FromMaybe(
+      v8::Object::New(isolate));
+    auto params = object->GetOwnPropertyNames(isolate->GetCurrentContext()).FromMaybe(
+      v8::Array::New(isolate));
+    auto params_count = params->Length();
+
+    // Iterate over object entries
+    for (unsigned int i = 0; i < params_count; i++) {
+      auto param = params->Get(*context, i).ToLocalChecked();
+
+      // Parse Object key-val pairs as strings
+      v8::String::Utf8Value parameter(isolate, param);
+      v8::String::Utf8Value value(
+          isolate, object->Get(*context, param).ToLocalChecked());
+
+      // -h vs --help
+      params_appendage.append(parameter.length() == 1 ? " -" : " --");
+      params_appendage.append(ToCString(parameter)).append(" ")
+        .append(ToCString(value));
+    }   
+  }
+
+  if (args.Length() > 2) {
+    if (args[2]->IsBoolean() &&
+        !(args[2]->ToBoolean(isolate)->BooleanValue(isolate))) {
+       verbose = false;
+    }
+  }
+
   v8::String::Utf8Value str(isolate, args[0]);
 
-  // C style shortcut in the line above si.cb = sizeof(ci)
+  // C style shortcut si.cb = sizeof(ci)
   STARTUPINFO si = {sizeof(si)};
 
   PROCESS_INFORMATION pi;
 
+  std::string process_command = ToCString(str);
+  process_command.append(params_appendage);
+
   auto OK = CreateProcessA(nullptr,
-    const_cast<char*>(ToCString(str)),
+    const_cast<char*>(process_command.c_str()),
     nullptr,
     nullptr,
     FALSE,
@@ -277,23 +322,25 @@ void StartProcess(const v8::FunctionCallbackInfo<v8::Value>& args) {
     &si, 
     &pi);
 
-  if (OK) {  // check if Process is created
-    std::cout << "Process with PID " << pi.dwProcessId
-              << " is currently running..." << std::endl;
+  // check if Windows was able to spawn a new child process
+  if (OK) {
+    if (verbose) {
+       std::cout << "Process with PID " << pi.dwProcessId
+                 << " is currently running..." << std::endl;
+    }
 
-    // Wait utill Process object is signaled (child process terminates)
+    // Wait untill Process object is signaled (usually when child process terminates)
     auto status = WaitForSingleObject(pi.hProcess, INFINITE);
 
-    if (status == WAIT_OBJECT_0) {
+    if (status == WAIT_OBJECT_0 && verbose) {
       std::cout << "Process " << pi.dwProcessId << " ended execution!"
                 << std::endl;
     }
 
-    CloseHandle(pi.hProcess);  // Handles must be explicitly closed if not
-                                // parent process will hold on to it even if
-                                // child process is terminated.
+    // Handles must be explicitly closed. If not, the parent process will
+    // hold on to it even if the child process is terminated.
+    CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
-
   } else {
     PrintErrorTag();
     std::cerr << " " << std::system_category().message(GetLastError())
@@ -409,8 +456,8 @@ void ReportException(v8::Isolate* isolate, v8::TryCatch* try_catch) {
     v8::Local<v8::Value> stack_trace;
     if (try_catch->StackTrace(context).ToLocal(&stack_trace) &&
         stack_trace->IsString() && stack_trace.As<v8::String>()->Length() > 0) {
-      v8::String::Utf8Value stack_trace(isolate, stack_trace);
-      std::cerr << ToCString(stack_trace) << std::endl;
+      v8::String::Utf8Value stack_trace_result(isolate, stack_trace);
+      std::cerr << ToCString(stack_trace_result) << std::endl;
     }
 
     PrintCWD();

@@ -96,3 +96,34 @@ Reads a given file and returns it's contents as a string.
 ### execute(filename)
 
 Reads a given file, parses it's content as JavaScript, compiles and executes it.
+
+---
+
+### runSync(filename, parameters, verbose = true)
+
+Creates a child process and halts execution of the shell until the child process terminates.
+First argument `filename` is a string with the name of the application to be executed which 
+is first looked for in the current executable's directory, otherwise the PATH is searched.
+This function will also capture the standard out, eror and in streams and redirect them
+to the shell. Note however that this behaviour is not guarenteed, especially in cases where
+a new window is created by the child process.
+```js
+runSync('calc')
+runSync('C:/cool-app/app.exe') // can also pass an absolute path
+```
+
+Second argument is an optional additional object with parameters to be passed to the executable.
+```js
+// cmd equivalent: cmake --preset x64-release
+runSync('cmake', { preset: 'x64-debug' })
+
+// cmd equivalent: git -v
+runSync('git', { v: '' })
+```
+
+Third argument is controls verbosity of this functions. If set to `false` then some
+messages wont be printed, however the standard out/error streams of the child process will
+still be captured and printed.
+```js
+runSync('git', { v: '' }, false)
+```
