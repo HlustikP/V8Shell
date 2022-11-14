@@ -314,6 +314,14 @@ void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args) {
   PROCESS_INFORMATION pi;
 
   std::string process_command = ToCString(str);
+
+  // Check if cwd contains a file with that name
+  fs::path try_local_file = RuntimeMemory::current_directoy;
+  try_local_file.append(process_command);
+  if (fs::exists(try_local_file) && !fs::is_directory(try_local_file)) {
+    process_command = try_local_file.generic_string();
+  }
+
   process_command.append(params_appendage);
 
   auto OK = CreateProcessA(nullptr,
