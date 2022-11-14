@@ -6,7 +6,7 @@ struct Settings {
   bool run_shell;
 };
 
-const auto current_version = "0.1.0";
+const auto current_version = "0.2.0";
 
 static inline std::vector<std::tuple<std::string, v8::FunctionCallback>>
   cpp_hooks {
