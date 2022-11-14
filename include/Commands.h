@@ -11,6 +11,7 @@
 #include <string>
 #include <iostream>
 #include <filesystem>
+#include <optional>
 
 #include "libplatform/libplatform.h"
 #include "v8.h"
@@ -51,7 +52,7 @@ void Help(const v8::FunctionCallbackInfo<v8::Value>& args);
 void StartProcess(const v8::FunctionCallbackInfo<v8::Value>& args); */
 
 // Helper functions
-v8::MaybeLocal<v8::String> ReadFile(v8::Isolate* isolate, const char* name);
+std::optional<v8::MaybeLocal<v8::String>> ReadFile(v8::Isolate* isolate, const char* name);
 bool ExecuteString(v8::Isolate* isolate, v8::Local<v8::String> source,
   v8::Local<v8::Value> name, bool print_result, bool report_exceptions);
 void ReportException(v8::Isolate* isolate, v8::TryCatch* handler);

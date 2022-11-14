@@ -112,6 +112,9 @@ int RunMain(v8::Isolate* isolate, v8::Platform* platform, int argc,
     if (strcmp(str, "--shell") == 0) {
       settings.run_shell = true;
     }
+    else if (strcmp(str, "--no-shell") == 0) {
+      settings.run_shell = false;
+    }
     else if (strcmp(str, "-f") == 0) {
       // Ignore any -f flags for compatibility with the other stand-
       // alone JavaScript engines.
@@ -140,7 +143,9 @@ int RunMain(v8::Isolate* isolate, v8::Platform* platform, int argc,
       v8::Local<v8::String> file_name =
           v8::String::NewFromUtf8(isolate, str).ToLocalChecked();
       v8::Local<v8::String> source;
-      if (!Commands::ReadFile(isolate, str).ToLocal(&source)) {
+      auto file_content = Commands::ReadFile(isolate, str);
+      if (file_content.has_value()) {
+        file_content.value().ToLocal(&source);
         Commands::PrintErrorTag();
         std::cerr << " cannot read file " << str << std::endl;
 

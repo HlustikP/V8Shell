@@ -67,9 +67,12 @@ void Read(const v8::FunctionCallbackInfo<v8::Value>& args) {
     return;
   }
   v8::Local<v8::String> source;
-  if (!ReadFile(args.GetIsolate(), *file).ToLocal(&source)) {
+  auto file_content = ReadFile(args.GetIsolate(), *file);
+  if (!file_content.has_value()) {
     args.GetIsolate()->ThrowError("[Error] Cannot load file content");
     return;
+  } else {
+    file_content.value().ToLocal(&source);
   }
 
   args.GetReturnValue().Set(source);
@@ -77,7 +80,7 @@ void Read(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 /** The callback that is invoked by v8 whenever the JavaScript 'execute'
  *   function is called. Loads, parses, compiles and executes its argument
- * JavaScript file. */
+ *   JavaScript file. */
 void Execute(const v8::FunctionCallbackInfo<v8::Value>& args) {
   for (int i = 0; i < args.Length(); i++) {
     v8::HandleScope handle_scope(args.GetIsolate());
@@ -87,9 +90,12 @@ void Execute(const v8::FunctionCallbackInfo<v8::Value>& args) {
       return;
     }
     v8::Local<v8::String> source;
-    if (!ReadFile(args.GetIsolate(), *file).ToLocal(&source)) {
+    auto file_content = ReadFile(args.GetIsolate(), *file);
+    if (!file_content.has_value()) {
       args.GetIsolate()->ThrowError("[Error] Cannot load file content");
       return;
+    } else {
+      file_content.value().ToLocal(&source);
     }
     if (!ExecuteString(args.GetIsolate(), source, args[i], false, false)) {
       args.GetIsolate()->ThrowError("[Error] Failure to execute file content");
@@ -349,29 +355,39 @@ void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 
 /** Reads the content of a file into a v8 string. */
-v8::MaybeLocal<v8::String> ReadFile(v8::Isolate* isolate, const char* name) {
-  FILE* file = nullptr;
-  fopen_s(&file, name, "rb");
-  if (file == NULL) return v8::MaybeLocal<v8::String>();
+std::optional<v8::MaybeLocal<v8::String>> ReadFile(v8::Isolate* isolate, const char* name) {
+  std::ifstream input_file;
+  input_file.open(name, std::ios::binary);
+  if (!input_file) {
+    PrintErrorTag();
+    std::cerr << " Cannot open input file " << name << std::endl;
 
-  fseek(file, 0, SEEK_END);
-  size_t size = ftell(file);
-  rewind(file);
-
-  char* chars = new char[size + 1];
-  chars[size] = '\0';
-  for (size_t i = 0; i < size;) {
-    i += fread(&chars[i], 1, size - i, file);
-    if (ferror(file)) {
-      fclose(file);
-      return v8::MaybeLocal<v8::String>();
-    }
+    return std::nullopt;
   }
-  fclose(file);
-  v8::MaybeLocal<v8::String> result = v8::String::NewFromUtf8(
-    isolate, chars, v8::NewStringType::kNormal, static_cast<int>(size));
 
-  delete[] chars;
+  // get length of file:
+  input_file.seekg(0, input_file.end);
+  const auto size = input_file.tellg();
+
+  // tellg() returns -1 if it fails
+  if (size == -1) {
+    PrintErrorTag();
+    std::cerr << " Cannot tellg() file content length" << std::endl;
+
+    return std::nullopt;
+  }
+
+  // reqind to beginning
+  input_file.seekg(0, std::ifstream::beg);
+  auto* buffer = new char[size];
+
+  input_file.read(buffer, static_cast<int>(size));
+  input_file.close();
+
+  v8::MaybeLocal<v8::String> result = v8::String::NewFromUtf8(
+    isolate, buffer, v8::NewStringType::kNormal, static_cast<int>(size));
+
+  delete[] buffer;
   return result;
 }
 
