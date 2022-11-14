@@ -71,10 +71,9 @@ void Read(const v8::FunctionCallbackInfo<v8::Value>& args) {
   if (!file_content.has_value()) {
     args.GetIsolate()->ThrowError("[Error] Cannot load file content");
     return;
-  } else {
-    file_content.value().ToLocal(&source);
   }
 
+  file_content.value().ToLocal(&source);
   args.GetReturnValue().Set(source);
 }
 
@@ -94,9 +93,9 @@ void Execute(const v8::FunctionCallbackInfo<v8::Value>& args) {
     if (!file_content.has_value()) {
       args.GetIsolate()->ThrowError("[Error] Cannot load file content");
       return;
-    } else {
-      file_content.value().ToLocal(&source);
     }
+    file_content.value().ToLocal(&source);
+
     if (!ExecuteString(args.GetIsolate(), source, args[i], false, false)) {
       args.GetIsolate()->ThrowError("[Error] Failure to execute file content");
       return;

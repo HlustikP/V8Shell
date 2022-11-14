@@ -88,18 +88,10 @@ v8::Local<v8::Context> CreateShellContext(v8::Isolate* isolate) {
     v8::Local<v8::ObjectTemplate> global = v8::ObjectTemplate::New(isolate);
 
     // Register c++ hooks to global functions
-    global->Set(isolate, "print", v8::FunctionTemplate::New(isolate, Commands::Print));
-    global->Set(isolate, "read", v8::FunctionTemplate::New(isolate, Commands::Read));
-    global->Set(isolate, "execute", v8::FunctionTemplate::New(isolate, Commands::Execute));
-    global->Set(isolate, "quit", v8::FunctionTemplate::New(isolate, Commands::Quit));
-    global->Set(isolate, "exit", v8::FunctionTemplate::New(isolate, Commands::Quit));
-    global->Set(isolate, "version", v8::FunctionTemplate::New(isolate, Commands::Version));
-    global->Set(isolate, "cd", v8::FunctionTemplate::New(isolate, Commands::ChangeDirectory));
-    global->Set(isolate, "changeDirectory", 
-      v8::FunctionTemplate::New(isolate, Commands::ChangeDirectory));
-    global->Set(isolate, "ls", v8::FunctionTemplate::New(isolate, Commands::ListFiles));
-    global->Set(isolate, "ll", v8::FunctionTemplate::New(isolate, Commands::ListFiles));
-    global->Set(isolate, "runSync", v8::FunctionTemplate::New(isolate, Commands::StartProcessSync));
+    for (auto& hook : cpp_hooks) {
+        global->Set(isolate, std::get<0>(hook).c_str(),
+          v8::FunctionTemplate::New(isolate,std::get<1>(hook)));
+    }
 
     return v8::Context::New(isolate, NULL, global);
 }
@@ -120,10 +112,9 @@ int RunMain(v8::Isolate* isolate, v8::Platform* platform, int argc,
       // alone JavaScript engines.
       continue;
     }
-    else if (strncmp(str, "--", 2) == 0) {
-      Commands::PrintWarningTag();
-      std::cerr << " used unknown flag " << str << std::endl 
-        << "Try --help for options" << std::endl;
+    else if (strcmp(str, "--help") == 0) {
+      // TODO: Implement
+      continue;
     }
     else if (strcmp(str, "-e") == 0 && i + 1 < argc) {
       // Execute argument given to -e option directly.
@@ -133,26 +124,33 @@ int RunMain(v8::Isolate* isolate, v8::Platform* platform, int argc,
       if (!v8::String::NewFromUtf8(isolate, argv[++i]).ToLocal(&source)) {
         return 1;
       }
-      bool success = Commands::ExecuteString(isolate, source, file_name, false, true);
+      bool success =
+          Commands::ExecuteString(isolate, source, file_name, false, true);
       settings.run_shell = false;
       while (v8::platform::PumpMessageLoop(platform, isolate)) continue;
       if (!success) return 1;
     }
-    else {
+    else if (strncmp(str, "-", 1) == 0) {
+      Commands::PrintWarningTag();
+      std::cerr << " used unknown flag " << str << std::endl 
+        << "Try --help for options" << std::endl;
+    } else {
       // Use all other arguments as names of files to load and run.
       v8::Local<v8::String> file_name =
           v8::String::NewFromUtf8(isolate, str).ToLocalChecked();
       v8::Local<v8::String> source;
       auto file_content = Commands::ReadFile(isolate, str);
-      if (file_content.has_value()) {
-        file_content.value().ToLocal(&source);
+      if (!file_content.has_value()) {
         Commands::PrintErrorTag();
         std::cerr << " cannot read file " << str << std::endl;
 
         continue;
       }
+      file_content.value().ToLocal(&source);
       bool success = Commands::ExecuteString(isolate, source, file_name, false, true);
+
       while (v8::platform::PumpMessageLoop(platform, isolate)) continue;
+
       if (!success) return 1;
     }
   }
