@@ -28,7 +28,10 @@ static inline std::vector<std::tuple<std::string, v8::FunctionCallback>>
   std::tuple("rf", Commands::RemoveFile),
   std::tuple("removeDir", Commands::RemoveDir),
   std::tuple("rd", Commands::RemoveDir),
-  std::tuple("rm", Commands::RemoveAny)
+  std::tuple("rm", Commands::RemoveAny),
+  std::tuple("rename", Commands::Rename),
+  std::tuple("move", Commands::Move),
+  std::tuple("mv", Commands::Move)
 };
 
 std::unique_ptr<v8::Platform> SetupV8(int argc, char* argv[]);

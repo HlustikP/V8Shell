@@ -254,7 +254,7 @@ void ListFiles(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 
 /** The callback that is invoked by v8 whenever the JavaScript 'createFile'
-*   function is called. Creates a new file in the cwd. */
+ *  function is called. Creates a new file in the cwd. */
 void CreateNewFile(const v8::FunctionCallbackInfo<v8::Value>& args) {
   fs::path try_file = RuntimeMemory::current_directoy;
   v8::String::Utf8Value file(args.GetIsolate(), args[0]);
@@ -300,7 +300,8 @@ void RemoveFile(const v8::FunctionCallbackInfo<v8::Value>& args) {
   auto OK = fs::remove(try_file, err);
   if (!OK) {
     PrintErrorTag();
-    std::cerr << " " << GetLastError() << std::endl;
+    std::cerr << " " << std::system_category().message(GetLastError())
+              << std::endl;
   }
 }
 
@@ -334,7 +335,8 @@ void RemoveDir(const v8::FunctionCallbackInfo<v8::Value>& args) {
   auto OK = fs::remove_all(try_dir, err);
   if (!OK) {
     PrintErrorTag();
-    std::cerr << " " << GetLastError() << std::endl;
+    std::cerr << " " << std::system_category().message(GetLastError())
+              << std::endl;
   }
 }
 
@@ -350,18 +352,79 @@ void RemoveAny(const v8::FunctionCallbackInfo<v8::Value>& args) {
   auto OK = fs::remove_all(try_path, err);
   if (!OK) {
     PrintErrorTag();
-    std::cerr << " " << GetLastError() << std::endl;
+    std::cerr << " " << std::system_category().message(GetLastError())
+              << std::endl;
+  }
+}
+
+/** The callback that is invoked by v8 whenever the JavaScript 'rename'
+ *  function is called. Renames the passed file or directory
+ *  to the new name in arg[1]. This function guarantees that the new
+ *  entity is in the same directory as the old one */
+void Rename(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  fs::path try_path = RuntimeMemory::current_directoy;
+  v8::String::Utf8Value path_entity(args.GetIsolate(), args[0]);
+  auto pathname = ToCString(path_entity);
+  try_path.append(pathname);
+
+  fs::path new_path = RuntimeMemory::current_directoy;
+  v8::String::Utf8Value new_path_entity(args.GetIsolate(), args[1]);
+  auto new_pathname = ToCString(new_path_entity);
+
+  // if the passed path is relative, construct path relative to cwd
+  if (!fs::path(new_pathname).is_absolute()) {
+    new_path.append(new_pathname);
+  }
+
+  if (new_path.parent_path() != try_path.parent_path()) {
+    PrintErrorTag();
+    std::cerr << " Tried to move file " << rang::style::bold
+              << pathname << rang::style::reset << " to new location."
+              << " Use the move('from', 'to') function instead." << std::endl;
+
+    return;
+  }
+
+  std::error_code err;
+  fs::rename(try_path, new_pathname, err);
+
+  if (err.value() != 0) {
+    PrintErrorTag();
+    std::cerr << " " << std::system_category().message(GetLastError())
+              << std::endl;
+  }
+}
+
+/** The callback that is invoked by v8 whenever the JavaScript 'move'
+ *  function is called. Moves the passed file or directory
+ *  to the new path in arg[1]. */
+void Move(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  v8::String::Utf8Value path_entity(args.GetIsolate(), args[0]);
+  auto old_path = fs::path(ToCString(path_entity));
+  ConstructAbsolutePath(old_path);
+
+  v8::String::Utf8Value new_path_entity(args.GetIsolate(), args[1]);
+  auto new_path = fs::path(ToCString(new_path_entity));
+  ConstructAbsolutePath(new_path);
+
+  std::error_code err;
+  fs::rename(old_path, new_path, err);
+
+  if (err.value() != 0) {
+    PrintErrorTag();
+    std::cerr << " " << std::system_category().message(GetLastError())
+              << std::endl;
   }
 }
 
 /** The callback that is invoked by v8 whenever the JavaScript 'runSync'
-*   function is called. Creates a child process and halts execution 
-*   of the shell until the child process terminates.
-*   First argument is the application to be executed which is first
-*   looked for in the current executable's directory, otherwise the
-*   PATH is searched. Second argument is an optional additional
-*   object with parameeters to be passed to the executable.
-*   Third argument is controls verbosity of this functions. */
+ *  function is called. Creates a child process and halts execution
+ *  of the shell until the child process terminates.
+ *  First argument is the application to be executed which is first
+ *  looked for in the current executable's directory, otherwise the
+ *  PATH is searched. Second argument is an optional additional
+ *  object with parameeters to be passed to the executable.
+ *  Third argument is controls verbosity of this functions. */
 void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args) {
   auto* isolate = args.GetIsolate();
   auto* context =  &(isolate->GetCurrentContext());
@@ -591,6 +654,17 @@ void ReportException(v8::Isolate* isolate, v8::TryCatch* try_catch) {
 /** Extracts the underlying C string from a v8 Utf8Value. */
 const char* ToCString(const v8::String::Utf8Value& value) {
   return *value ? *value : "[Error] string conversion failed";
+}
+
+/** Constructs a path relative to the cwd if path is relaitve */
+void ConstructAbsolutePath(fs::path& path /*IN-OUT*/) {
+  // Nothing needs to be done if path is already absolute
+  if (path.is_absolute()) {
+    return;
+  }
+
+  fs::path cwd = RuntimeMemory::current_directoy;
+  path = cwd.append(path.generic_string());
 }
 
 };

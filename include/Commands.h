@@ -45,10 +45,11 @@ void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args);
 void RemoveFile(const v8::FunctionCallbackInfo<v8::Value>& args);
 void RemoveDir(const v8::FunctionCallbackInfo<v8::Value>& args);
 void RemoveAny(const v8::FunctionCallbackInfo<v8::Value>& args);
+void Rename(const v8::FunctionCallbackInfo<v8::Value>& args);
+void Move(const v8::FunctionCallbackInfo<v8::Value>& args);
+void Copy(const v8::FunctionCallbackInfo<v8::Value>& args);
 
 /* Scheduled for implementation:
-void CopyFile(const v8::FunctionCallbackInfo<v8::Value>& args);
-void RenameFile(const v8::FunctionCallbackInfo<v8::Value>& args);
 void CreateDirectory(const v8::FunctionCallbackInfo<v8::Value>& args);
 void CreateFile(const v8::FunctionCallbackInfo<v8::Value>& args);
 void Help(const v8::FunctionCallbackInfo<v8::Value>& args);
@@ -60,5 +61,6 @@ bool ExecuteString(v8::Isolate* isolate, v8::Local<v8::String> source,
   v8::Local<v8::Value> name, bool print_result, bool report_exceptions);
 void ReportException(v8::Isolate* isolate, v8::TryCatch* handler);
 const char* ToCString(const v8::String::Utf8Value& value);
+void ConstructAbsolutePath(fs::path& path/*OUT*/);
 
 };
