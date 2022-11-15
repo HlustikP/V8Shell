@@ -40,12 +40,15 @@ void Quit(const v8::FunctionCallbackInfo<v8::Value>& args);
 void Version(const v8::FunctionCallbackInfo<v8::Value>& args);
 void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args);
 void ListFiles(const v8::FunctionCallbackInfo<v8::Value>& args);
+void CreateNewFile(const v8::FunctionCallbackInfo<v8::Value>& args);
 void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args);
+void RemoveFile(const v8::FunctionCallbackInfo<v8::Value>& args);
+void RemoveDir(const v8::FunctionCallbackInfo<v8::Value>& args);
+void RemoveAny(const v8::FunctionCallbackInfo<v8::Value>& args);
 
 /* Scheduled for implementation:
 void CopyFile(const v8::FunctionCallbackInfo<v8::Value>& args);
 void RenameFile(const v8::FunctionCallbackInfo<v8::Value>& args);
-void DeleteFile(const v8::FunctionCallbackInfo<v8::Value>& args);
 void CreateDirectory(const v8::FunctionCallbackInfo<v8::Value>& args);
 void CreateFile(const v8::FunctionCallbackInfo<v8::Value>& args);
 void Help(const v8::FunctionCallbackInfo<v8::Value>& args);

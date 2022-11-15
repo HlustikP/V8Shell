@@ -253,6 +253,107 @@ void ListFiles(const v8::FunctionCallbackInfo<v8::Value>& args) {
   }
 }
 
+/** The callback that is invoked by v8 whenever the JavaScript 'createFile'
+*   function is called. Creates a new file in the cwd. */
+void CreateNewFile(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  fs::path try_file = RuntimeMemory::current_directoy;
+  v8::String::Utf8Value file(args.GetIsolate(), args[0]);
+  auto filename = ToCString(file);
+
+  if (fs::exists(try_file.append(filename))) {
+    PrintErrorTag();
+    std::cerr << " File " << filename << " already exists." << std::endl;
+
+    return;
+  }
+
+  std::ofstream out_filestream(try_file);
+  out_filestream.close();
+}
+
+/** The callback that is invoked by v8 whenever the JavaScript 'removeFile'
+ *  function is called. Deletes the file mentioned in arg[0]. */
+void RemoveFile(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  fs::path try_file = RuntimeMemory::current_directoy;
+  v8::String::Utf8Value file(args.GetIsolate(), args[0]);
+  auto filename = ToCString(file);
+  
+  if (!fs::exists(try_file.append(filename))) {
+    PrintErrorTag();
+  std::cerr << " File " << rang::style::bold << filename << rang::style::reset
+            << " doesnt exists." << std::endl;
+
+    return;
+  }
+  if (fs::is_directory(try_file)) {
+    PrintErrorTag();
+    std::cerr << " Entity " << rang::style::bold << filename << rang::style::reset << " is a directory."
+              << " Try removeDir('" << filename << "') or rm('"
+              << filename << "') instead."
+                   
+      << std::endl;
+
+    return;
+  }
+
+  std::error_code err;
+  auto OK = fs::remove(try_file, err);
+  if (!OK) {
+    PrintErrorTag();
+    std::cerr << " " << GetLastError() << std::endl;
+  }
+}
+
+/** The callback that is invoked by v8 whenever the JavaScript 'removeDir'
+ *  function is called. Recursively deletes the directory mentioned in arg[0]. */
+void RemoveDir(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  fs::path try_dir = RuntimeMemory::current_directoy;
+  v8::String::Utf8Value dir(args.GetIsolate(), args[0]);
+  auto dirname = ToCString(dir);
+
+  if (!fs::exists(try_dir.append(dirname))) {
+    PrintErrorTag();
+    std::cerr << " Directory " << rang::style::bold << dirname
+              << rang::style::reset << " doesnt exists." << std::endl;
+
+    return;
+  }
+  if (!fs::is_directory(try_dir)) {
+    PrintErrorTag();
+    std::cerr << " Entity " << rang::style::bold << dirname
+              << rang::style::reset << " is a file."
+              << " Try removeFile('" << dirname << "') or rm('" << dirname
+              << "') instead."
+
+              << std::endl;
+
+    return;
+  }
+
+  std::error_code err;
+  auto OK = fs::remove_all(try_dir, err);
+  if (!OK) {
+    PrintErrorTag();
+    std::cerr << " " << GetLastError() << std::endl;
+  }
+}
+
+/** The callback that is invoked by v8 whenever the JavaScript 'rm'
+ *  function is called. (Recursively) deletes the path entity mentioned in arg[0]. */
+void RemoveAny(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  fs::path try_path = RuntimeMemory::current_directoy;
+  v8::String::Utf8Value path_entity(args.GetIsolate(), args[0]);
+  auto pathname = ToCString(path_entity);
+  try_path.append(pathname);
+
+  std::error_code err;
+  auto OK = fs::remove_all(try_path, err);
+  if (!OK) {
+    PrintErrorTag();
+    std::cerr << " " << GetLastError() << std::endl;
+  }
+}
+
 /** The callback that is invoked by v8 whenever the JavaScript 'runSync'
 *   function is called. Creates a child process and halts execution 
 *   of the shell until the child process terminates.

@@ -8,6 +8,8 @@ endif()
 project (V8Shell VERSION 0.1.0)
 include (CPack)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 include(FetchContent)
 set(gtest_force_shared_crt)
 FetchContent_Declare(
