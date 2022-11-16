@@ -417,6 +417,45 @@ void Move(const v8::FunctionCallbackInfo<v8::Value>& args) {
   }
 }
 
+/** The callback that is invoked by v8 whenever the JavaScript 'copy'
+ *  function is called. Copies the passed file or directory
+ *  to the new path in arg[1]. */
+void Copy(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  v8::String::Utf8Value path_entity(args.GetIsolate(), args[0]);
+  auto source_path = fs::path(ToCString(path_entity));
+  ConstructAbsolutePath(source_path);
+
+  v8::String::Utf8Value new_path_entity(args.GetIsolate(), args[1]);
+  auto dest_path = fs::path(ToCString(new_path_entity));
+  ConstructAbsolutePath(dest_path);
+
+  std::error_code err;
+  fs::copy(source_path, dest_path, err);
+
+  if (err.value() != 0) {
+    PrintErrorTag();
+    std::cerr << " " << std::system_category().message(GetLastError())
+              << std::endl;
+  }
+}
+
+/** The callback that is invoked by v8 whenever the JavaScript 'mkdir'
+ *  function is called. Creates a new directory. */
+void CreateNewDir(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  v8::String::Utf8Value dirname(args.GetIsolate(), args[0]);
+  auto new_dir = fs::path(ToCString(dirname));
+  ConstructAbsolutePath(new_dir);
+
+  std::error_code err;
+  fs::create_directory(new_dir, err);
+
+  if (err.value() != 0) {
+    PrintErrorTag();
+    std::cerr << " " << std::system_category().message(GetLastError())
+              << std::endl;
+  }
+}
+
 /** The callback that is invoked by v8 whenever the JavaScript 'runSync'
  *  function is called. Creates a child process and halts execution
  *  of the shell until the child process terminates.
@@ -656,7 +695,7 @@ const char* ToCString(const v8::String::Utf8Value& value) {
   return *value ? *value : "[Error] string conversion failed";
 }
 
-/** Constructs a path relative to the cwd if path is relaitve */
+/** Constructs a path relative to the cwd if path is relative. */
 void ConstructAbsolutePath(fs::path& path /*IN-OUT*/) {
   // Nothing needs to be done if path is already absolute
   if (path.is_absolute()) {
