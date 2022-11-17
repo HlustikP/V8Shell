@@ -11,7 +11,7 @@ Additionally if you want to build the source yourself
 - Build v8 as a `static monolithic library`, [the v8 docs will guide you through the process](https://v8.dev/docs)
 (this project contains an [args.gn](./args.gn) file that you can use as a gn config
 for bulding the library)
-- support for `C++ 17`
+- compiler support for `C++ 17`
 - `Ninja` and `CMake` (recommended)
 - Set the environment variables `V8_INCLUDE` and `V8_LIB` respective to the paths of the v8
 include directory and the directory containing the v8 static lib
@@ -34,27 +34,49 @@ invoke native system code.
 
 ## As of now the following functions are implemented:
 
+### help()
+
+Prints an overview of all available shell functions.
+
+---
+
 ### exit()
 
-Alias: quit
+Alias: `quit`
 
 Terminates the shell process
 
 ---
 
+### print(expression)
+
+Evaluates a given expression and prints the result. Usually the shell will automatically
+print the result of the evaluation of it's input, so this is useful to print the result
+of a specific expression.
+
+---
+
+### version()
+
+Returns a string containing the current v8 version used by the embedded engine.
+
+---
+
+## File System Functions:
+
 ### ls (printToStd = true)
 
-Alias: ll
+Alias: `ll`
 
 Prints contents of the current working directory, coloring files/directories differently. Returns undefined.
-If printToStd is set to false, it will instead return an array of objects with the signature
+If `printToStd` is set to false, it will instead return an array of objects with the signature
 ```js
 {
     filename: "test.js",    // string
     isDirectory: false,     // boolean
 }
 ```
-Note: printToStd parameter enforces strict equality with the boolean type.
+Note: `printToStd` parameter enforces strict equality with the boolean type.
 
 ---
 
@@ -73,17 +95,76 @@ cd(1)
 
 ---
 
-### print(expression)
+### createFile(filename)
 
-Evaluates a given expression and prints the result. Usually the shell will automatically
-print the result of the evaluation of it's input, so this is useful to print the result
-of a specific expression.
+Alias: `touch`
+
+Creates a new file with the name `filename`.
 
 ---
 
-### version()
+### createDir(dirname)
 
-Returns a string containing the current v8 version used by the embedded engine.
+Alias: `mkdir`
+
+Creates a new directory with the name `dirname`.
+
+---
+
+### removeFile(filename)
+
+Alias: `rf`
+
+<p style="color:red">DANGER - USE WITH CARE</p>
+
+Removes the file `filename` from the filesystem. This function does NOT remove the
+entity if its a directory so consider using it to delete files and have a possible
+safeguard against accidentally deleting a directory.
+
+---
+
+### removeDir(dirname)
+
+Alias: `rd`
+
+<p style="color:red">DANGER - USE WITH CARE</p>
+
+Recursively removes the directory `dirname` and all it's contents from the file system.
+This function does not remove the entity if `dirname` is a file.
+
+---
+
+### rm(entityName)
+
+<p style="color:red">DANGER - USE WITH CARE</p>
+
+Removes the filesystem entity from the filesystem, regardless of type. If it's a directory
+then the directory's contents will be removed recursively aswell.
+
+---
+
+### rename(oldName, newName)
+
+Changes the name of the path entity `oldName` to `newName`. Note that this function does not
+rename anything if the target would be moved to a different location. This is to prevent
+accidental moving, if thats intended, use the `move` function.
+
+---
+
+### move(from, to)
+
+Alias: `mv`
+
+Moves the path entity `from` to a new location defined in `to`. Note that `to` is the new
+path assigned to it, including the file/directory name.
+
+---
+
+### copy(from, to)
+
+Alias: `cp`
+
+Constructs a copy of `from` at the path of `to`.
 
 ---
 
