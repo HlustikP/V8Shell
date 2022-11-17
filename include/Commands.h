@@ -49,9 +49,9 @@ void Rename(const v8::FunctionCallbackInfo<v8::Value>& args);
 void Move(const v8::FunctionCallbackInfo<v8::Value>& args);
 void Copy(const v8::FunctionCallbackInfo<v8::Value>& args);
 void CreateNewDir(const v8::FunctionCallbackInfo<v8::Value>& args);
+void Help(const v8::FunctionCallbackInfo<v8::Value>& args);
 
 /* Scheduled for implementation:
-void Help(const v8::FunctionCallbackInfo<v8::Value>& args);
 void SetPermissions(const v8::FunctionCallbackInfo<v8::Value>& args);
 void StartProcess(const v8::FunctionCallbackInfo<v8::Value>& args); */
 

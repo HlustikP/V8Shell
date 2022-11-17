@@ -117,7 +117,7 @@ void Quit(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 /** The callback that is invoked by v8 whenever the JavaScript 'version'
  *  function is called. Returns a string with the version of the embedded v8
- * engine. */
+ *  engine. */
 void Version(const v8::FunctionCallbackInfo<v8::Value>& args) {
   args.GetReturnValue().Set(
       v8::String::NewFromUtf8(args.GetIsolate(), v8::V8::GetVersion())
@@ -125,9 +125,9 @@ void Version(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 
 /** The callback that is invoked by v8 whenever the JavaScript 'cd'
- *   function is called. Changes the current directory to operate on.
- *   Inputting a number will go up this many parent directories and
- *   inputting a string will attempt to enter a subdirectory. */
+ *  function is called. Changes the current directory to operate on.
+ *  Inputting a number will go up this many parent directories and
+ *  inputting a string will attempt to enter a subdirectory. */
 void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args) {
   if (args.Length() == 0) {
     PrintCWD();
@@ -562,6 +562,69 @@ void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args) {
     std::cerr << " " << std::system_category().message(GetLastError())
               << std::endl;
   }
+}
+
+/** The callback that is invoked by v8 whenever the JavaScript 'help'
+ *  function is called. Prints available shell functions. */
+void Help(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  std::cout << "~Available functions (refer to the docs for further informations):~" 
+            << std::endl;
+  std::cout << rang::style::underline << "File System:" << rang::style::reset 
+            << std::endl;
+  std::cout
+      << rang::fg::magenta << "cd(path)/changeDirectory(path)" << rang::style::reset
+      << " - Changes the current working directory."
+      << " If a number is passed, the cwd goes up that many parent directories."
+      << std::endl << rang::fg::magenta << "ls(printToStd = true)/ll(printToStd = true)"
+      << rang::style::reset << " - Prints all files and directories"
+      << " in the current working directory. If 'false' is passed, it prints an array of"
+      << " objects describing the directory content."
+      << std::endl << rang::fg::magenta << "createFile(filename)/touch(filename)"
+      << rang::style::reset << " - Creates a new file."
+      << std::endl << rang::fg::magenta << "createDirectory(filename)/mkdir(filename)"
+      << rang::style::reset << " - Creates a new directory."
+      << std::endl << rang::fg::magenta << "removeFile(filename)/rf(filename)"
+      << rang::style::reset << " - Removes a file."
+      << std::endl << rang::fg::magenta << "removeDir(dirname)/rd(dirname)"
+      << rang::style::reset
+      << " - Recursively removes a Directory and it's contents."
+      << std::endl << rang::fg::magenta << "rm(entity)" << rang::style::reset
+      << " - Removes a file or recursively a directory and it's contents."
+      << std::endl << rang::fg::magenta << "rename(entity)" << rang::style::reset
+      << " - Renames the file or directory."
+      << std::endl << rang::fg::magenta << "move(from, to)/mv(from, to)"
+      << rang::style::reset << " - Moves a file or directory to a new location."
+      << std::endl << rang::fg::magenta << "copy(from, to)" << rang::style::reset
+      << " - Copies a file or directory to a new location."
+      << std::endl;
+
+  std::cout << rang::style::underline << "Execution:" << rang::style::reset 
+            << std::endl;
+  std::cout
+      << rang::fg::magenta << "execute(filename)" << rang::style::reset <<
+      " - Reads, parses, compiles and executes a .js file."
+      << std::endl
+      << rang::fg::magenta << "runSync(filename, parameters, verbose = true)"
+      << rang::style::reset << " - Spawns a child process executing"
+      << " the chosen file. The 'parameters' argument is an optional object with additional"
+      << " parameters passed to the executable. Holds execution of the shell until the child"
+      << " process terminates and redirects standard streams to the shell."
+      << std::endl;
+
+  std::cout << rang::style::underline << "General Functions:" << rang::style::reset 
+            << std::endl;
+  std::cout << rang::fg::magenta << "print(expression)" << rang::style::reset 
+      << " - Prints the result of a JavaScript Expression."
+      << std::endl
+      << rang::fg::magenta << "read(filename)" << rang::style::reset <<
+      " - Reads a file and returns it's content as a string."
+      << std::endl
+      << rang::fg::magenta << "quit()/exit()" << rang::style::reset
+      << " - Terminates the shell."
+      << std::endl
+      << rang::fg::magenta << "version()" << rang::style::reset
+      << " - Returns a string with the used v8 engine version."
+      << std::endl;
 }
 
 /** Reads the content of a file into a v8 string. */
