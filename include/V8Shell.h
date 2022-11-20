@@ -17,7 +17,7 @@ class V8Shell {
   V8Shell(const V8Shell&) = delete;
 
   int Run();
-  void AddHook(std::tuple<std::string, v8::FunctionCallback> hook);
+  bool AddHook(std::tuple<std::string, v8::FunctionCallback> hook);
  private:
   bool SetupV8Isolate();
   v8::Local<v8::Context> CreateShellContext();

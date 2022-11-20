@@ -176,3 +176,17 @@ v8::Local<v8::Context> V8Shell::CreateShellContext() {
 
   return v8::Context::New(isolate_, NULL, global);
 }
+
+/** Adds a new hook. If it couldn't be added because it would have added
+ *  a duplicate JS global function template, it returns false. */
+bool V8Shell::AddHook(std::tuple<std::string, v8::FunctionCallback> hook) {
+  // Check if JS function global is already being hooked to.
+  for (auto& cpp_hook : cpp_hooks) {
+    if (std::get<0>(cpp_hook) == std::get<0>(hook)) {
+      return false;
+    }
+  }
+
+  cpp_hooks.push_back(hook);
+  return true;
+}
