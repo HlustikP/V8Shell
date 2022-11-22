@@ -94,8 +94,15 @@ const struct RemoveAnyDir {
 
 const struct RemoveAnyFile {
   inline static int argc = 2;
-  inline static char* argv[] = {"tests", "../../../tests/scripts/rm-any-dir.js"};
+  inline static char* argv[] = {"tests", "../../../tests/scripts/rm-any-file.js"};
   inline static std::string target_file = "test-dir/test.txt";
+};
+
+const struct MoveFileTo {
+  inline static int argc = 2;
+  inline static char* argv[] = {"tests", "../../../tests/scripts/move.js"};
+  inline static std::string target_file_source = "test-dir/move-me.txt";
+  inline static std::string target_file = "test-dir/move-to/move-me.txt";
 };
 
 }  // namespace test

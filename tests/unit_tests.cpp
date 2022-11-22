@@ -11,7 +11,7 @@ TEST(CommandsUtils, GettingSettingsCWD) {
   const auto path = fs::current_path();
   Commands::SetCWD(path);
 
-  EXPECT_EQ(path, Commands::GetCWD());
+  ASSERT_EQ(path, Commands::GetCWD());
 }
 
 TEST(V8Shell, BootV8Shell) {
@@ -19,7 +19,7 @@ TEST(V8Shell, BootV8Shell) {
   V8Shell shell(test::BootV8Shell::argc, &test::BootV8Shell::argv,
                 exit_code);
 
-  EXPECT_EQ(exit_code, test::EXIT_CODE_OK);
+  ASSERT_EQ(exit_code, test::EXIT_CODE_OK);
 }
 
 TEST(V8Shell, RunV8Shell) {
@@ -28,7 +28,7 @@ TEST(V8Shell, RunV8Shell) {
                 exit_code);
   exit_code = shell.Run();
 
-  EXPECT_EQ(exit_code, test::EXIT_CODE_OK);
+  ASSERT_EQ(exit_code, test::EXIT_CODE_OK);
 }
 
 TEST(V8Shell, CreateNewDirectory) {
@@ -37,8 +37,8 @@ TEST(V8Shell, CreateNewDirectory) {
                 exit_code);
   exit_code = shell.Run();
 
-  EXPECT_TRUE(fs::exists(test::CreateNewDir::target_dir) && 
-    fs::is_directory(test::CreateNewDir::target_dir));
+  ASSERT_TRUE(fs::exists(test::CreateNewDir::target_dir));
+  EXPECT_TRUE(fs::is_directory(test::CreateNewDir::target_dir));
 }
 
 TEST(V8Shell, CreateNewFile) {
@@ -47,8 +47,8 @@ TEST(V8Shell, CreateNewFile) {
                 exit_code);
   exit_code = shell.Run();
 
-  EXPECT_TRUE(fs::exists(test::CreateNewFile::target_file) &&
-              !fs::is_directory(test::CreateNewFile::target_file));
+  ASSERT_TRUE(fs::exists(test::CreateNewFile::target_file));
+  EXPECT_FALSE(fs::is_directory(test::CreateNewFile::target_file));
 }
 
 TEST(V8Shell, CopySameDir) {
@@ -57,8 +57,8 @@ TEST(V8Shell, CopySameDir) {
                 exit_code);
   exit_code = shell.Run();
 
-  EXPECT_TRUE(fs::exists(test::CopySameDir::target_file) &&
-              !fs::is_directory(test::CopySameDir::target_file));
+  ASSERT_TRUE(fs::exists(test::CopySameDir::target_file));
+  EXPECT_FALSE(fs::is_directory(test::CopySameDir::target_file));
 }
 
 TEST(V8Shell, CopyDifferentDir) {
@@ -67,8 +67,8 @@ TEST(V8Shell, CopyDifferentDir) {
                 exit_code);
   exit_code = shell.Run();
 
-  EXPECT_TRUE(fs::exists(test::CopyDifferentDir::target_file) &&
-              !fs::is_directory(test::CopyDifferentDir::target_file));
+  ASSERT_TRUE(fs::exists(test::CopyDifferentDir::target_file));
+  EXPECT_FALSE(fs::is_directory(test::CopyDifferentDir::target_file));
 }
 
 TEST(V8Shell, RenameSameDir) {
@@ -77,8 +77,8 @@ TEST(V8Shell, RenameSameDir) {
                 exit_code);
   exit_code = shell.Run();
 
-  EXPECT_TRUE(fs::exists(test::RenameSameDir::target_file) &&
-              !fs::is_directory(test::RenameSameDir::target_file));
+  ASSERT_TRUE(fs::exists(test::RenameSameDir::target_file));
+  EXPECT_FALSE(fs::is_directory(test::RenameSameDir::target_file));
 }
 
 TEST(V8Shell, RenameDifferentDir) {
@@ -87,7 +87,7 @@ TEST(V8Shell, RenameDifferentDir) {
                 exit_code);
   exit_code = shell.Run();
 
-  EXPECT_TRUE(!fs::exists(test::RenameDifferentDir::target_file));
+  EXPECT_FALSE(fs::exists(test::RenameDifferentDir::target_file));
 }
 
 TEST(V8Shell, RemoveFileFile) {
@@ -96,7 +96,7 @@ TEST(V8Shell, RemoveFileFile) {
                 exit_code);
   exit_code = shell.Run();
 
-  EXPECT_TRUE(!fs::exists(test::RemoveFileFile::target_file));
+  EXPECT_FALSE(fs::exists(test::RemoveFileFile::target_file));
 }
 
 TEST(V8Shell, RemoveFileDir) {
@@ -114,7 +114,7 @@ TEST(V8Shell, RemoveDirDir) {
                 exit_code);
   exit_code = shell.Run();
 
-  EXPECT_TRUE(!fs::exists(test::RemoveDirDir::target_file));
+  EXPECT_FALSE(fs::exists(test::RemoveDirDir::target_file));
 }
 
 TEST(V8Shell, RemoveDirFile) {
@@ -132,7 +132,7 @@ TEST(V8Shell, RemoveAnyDir) {
                 exit_code);
   exit_code = shell.Run();
 
-  EXPECT_TRUE(!fs::exists(test::RemoveAnyDir::target_file));
+  EXPECT_FALSE(fs::exists(test::RemoveAnyDir::target_file));
 }
 
 TEST(V8Shell, RemoveAnyFile) {
@@ -141,5 +141,15 @@ TEST(V8Shell, RemoveAnyFile) {
                 exit_code);
   exit_code = shell.Run();
 
-  EXPECT_TRUE(!fs::exists(test::RemoveAnyFile::target_file));
+  EXPECT_FALSE(fs::exists(test::RemoveAnyFile::target_file));
+}
+
+TEST(V8Shell, MoveFileTo) {
+  int exit_code = 0;
+  V8Shell shell(test::MoveFileTo::argc, test::MoveFileTo::argv,
+                exit_code);
+  exit_code = shell.Run();
+
+  EXPECT_FALSE(fs::exists(test::MoveFileTo::target_file_source));
+  EXPECT_TRUE(fs::exists(test::MoveFileTo::target_file));
 }
