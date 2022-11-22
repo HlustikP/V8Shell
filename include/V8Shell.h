@@ -10,7 +10,7 @@ struct Settings {
 
 class V8Shell {
  public:
-  V8Shell(int argc, char* argv[], int& exit_code);
+  V8Shell(int argc, char** argv, int& exit_code);
   ~V8Shell();
 
   // V8 isolates are supposed to be unique per process

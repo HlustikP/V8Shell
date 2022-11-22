@@ -1,6 +1,6 @@
 #include "../../include/V8Shell.h"
 
-V8Shell::V8Shell(int argc, char* argv[], int& exit_code) {
+V8Shell::V8Shell(int argc, char** argv, int& exit_code) {
   v8::V8::InitializeICUDefaultLocation(argv[0]);
   v8::V8::InitializeExternalStartupData(argv[0]);
   platform_ = v8::platform::NewDefaultPlatform();

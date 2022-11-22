@@ -441,6 +441,13 @@ void CreateNewDir(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	auto new_dir = fs::path(ToCString(dirname));
 	ConstructAbsolutePath(new_dir);
 
+  if (fs::exists(new_dir) && fs::is_directory(new_dir)) {
+    PrintErrorTag();
+    std::cerr << " Directory " << new_dir.generic_string() << " already exists.";
+
+    return;
+  }
+
 	std::error_code err;
 	fs::create_directory(new_dir, err);
 
