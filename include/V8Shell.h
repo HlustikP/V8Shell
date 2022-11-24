@@ -23,37 +23,42 @@ class V8Shell {
   v8::Local<v8::Context> CreateShellContext();
   void RunShell(v8::Local<v8::Context> context);
 
+#ifdef _WIN32
   // c++ hooks
   inline static std::vector<std::tuple<std::string, v8::FunctionCallback>>
-      cpp_hooks{std::tuple("print", Commands::Print),
-                std::tuple("read", Commands::Read),
-                std::tuple("execute", Commands::Execute),
-                std::tuple("quit", Commands::Quit),
-                std::tuple("exit", Commands::Quit),
-                std::tuple("version", Commands::Version),
-                std::tuple("cd", Commands::ChangeDirectory),
-                std::tuple("changeDirectory", Commands::ChangeDirectory),
-                std::tuple("changeDir", Commands::ChangeDirectory),
-                std::tuple("ls", Commands::ListFiles),
-                std::tuple("ll", Commands::ListFiles),
-                std::tuple("runSync", Commands::StartProcessSync),
-                std::tuple("createFile", Commands::CreateNewFile),
-                std::tuple("touch", Commands::CreateNewFile),
-                std::tuple("removeFile", Commands::RemoveFile),
-                std::tuple("rf", Commands::RemoveFile),
-                std::tuple("removeDirectory", Commands::RemoveDir),
-                std::tuple("removeDir", Commands::RemoveDir),
-                std::tuple("rd", Commands::RemoveDir),
-                std::tuple("rm", Commands::RemoveAny),
-                std::tuple("rename", Commands::Rename),
-                std::tuple("move", Commands::Move),
-                std::tuple("mv", Commands::Move),
-                std::tuple("copy", Commands::Copy),
-                std::tuple("cp", Commands::Copy),
-                std::tuple("mkdir", Commands::CreateNewDir),
-                std::tuple("createDirectory", Commands::CreateNewDir),
-                std::tuple("createDir", Commands::CreateNewDir),
+      cpp_hooks{std::tuple("print", &Commands::Print),
+                std::tuple("read", &Commands::Read),
+                std::tuple("execute", &Commands::Execute),
+                std::tuple("quit", &Commands::Quit),
+                std::tuple("exit", &Commands::Quit),
+                std::tuple("version", &Commands::Version),
+                std::tuple("cd", &Commands::ChangeDirectory),
+                std::tuple("changeDirectory", &Commands::ChangeDirectory),
+                std::tuple("changeDir", &Commands::ChangeDirectory),
+                std::tuple("ls", &Commands::ListFiles),
+                std::tuple("ll", &Commands::ListFiles),
+                std::tuple("runSync", &Commands::StartProcessSync),
+                std::tuple("createFile", &Commands::CreateNewFile),
+                std::tuple("touch", &Commands::CreateNewFile),
+                std::tuple("removeFile", &Commands::RemoveFile),
+                std::tuple("rf", &Commands::RemoveFile),
+                std::tuple("removeDirectory", &Commands::RemoveDir),
+                std::tuple("removeDir", &Commands::RemoveDir),
+                std::tuple("rd", &Commands::RemoveDir),
+                std::tuple("rm", &Commands::RemoveAny),
+                std::tuple("rename", &Commands::Rename),
+                std::tuple("move", &Commands::Move),
+                std::tuple("mv", &Commands::Move),
+                std::tuple("copy", &Commands::Copy),
+                std::tuple("cp", &Commands::Copy),
+                std::tuple("mkdir", &Commands::CreateNewDir),
+                std::tuple("createDirectory", &Commands::CreateNewDir),
+                std::tuple("createDir", &Commands::CreateNewDir),
                 std::tuple("help", Commands::Help)};
+#else
+  inline static std::vector<std::tuple<std::string, v8::FunctionCallback>>
+    cpp_hooks;
+#endif
 
   std::unique_ptr<v8::Platform> platform_;
   v8::Isolate::CreateParams create_params_;

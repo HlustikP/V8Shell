@@ -9,6 +9,7 @@ project (V8Shell VERSION 0.3.0)
 include (CPack)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set (CMAKE_CXX_STANDARD 17)
 
 include(FetchContent)
 set(gtest_force_shared_crt)
@@ -31,4 +32,7 @@ endif()
 add_compile_definitions(V8_COMPRESS_POINTERS V8_ENABLE_SANDBOX)
 
 add_subdirectory(src)
-add_subdirectory(tests)
+
+if(WIN32)
+    add_subdirectory(tests)
+endif()

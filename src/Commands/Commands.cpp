@@ -1,4 +1,4 @@
-#include "../../include/Commands.h"
+#include "Commands.h"
 
 namespace Commands {
 
@@ -73,7 +73,12 @@ void Read(const v8::FunctionCallbackInfo<v8::Value>& args) {
 		return;
 	}
 
-	file_content.value().ToLocal(&source);
+	auto OK = file_content.value().ToLocal(&source);
+
+  if (!OK) {
+    args.GetIsolate()->ThrowError("[Error] Cannot stringify file content");
+  }
+
 	args.GetReturnValue().Set(source);
 }
 
@@ -94,7 +99,12 @@ void Execute(const v8::FunctionCallbackInfo<v8::Value>& args) {
 			args.GetIsolate()->ThrowError("[Error] Cannot load file content");
 			return;
 		}
-		file_content.value().ToLocal(&source);
+
+		auto OK = file_content.value().ToLocal(&source);
+
+    if (!OK) {
+      args.GetIsolate()->ThrowError("[Error] Cannot stringify file content");
+    }
 
 		if (!ExecuteString(args.GetIsolate(), source, args[i], false, false)) {
 			args.GetIsolate()->ThrowError("[Error] Failure to execute file content");
@@ -217,15 +227,15 @@ void ListFiles(const v8::FunctionCallbackInfo<v8::Value>& args) {
 				object->Set(
 						isolate->GetCurrentContext(),
 						v8::String::NewFromUtf8(isolate, "isDirectory").ToLocalChecked(),
-						v8::Boolean::New(isolate, true));
+						v8::Boolean::New(isolate, true)).Check();
 
 				object->Set(
 						isolate->GetCurrentContext(),
 						v8::String::NewFromUtf8(isolate, "filename").ToLocalChecked(),
 						v8::String::NewFromUtf8(isolate, filename.c_str())
-								.ToLocalChecked());
+								.ToLocalChecked()).Check();
 
-				result->Set(isolate->GetCurrentContext(), result_index, object);
+				result->Set(isolate->GetCurrentContext(), result_index, object).Check();
 				result_index++;
 			}
 		}
@@ -238,14 +248,14 @@ void ListFiles(const v8::FunctionCallbackInfo<v8::Value>& args) {
 			object->Set(
 					isolate->GetCurrentContext(),
 					v8::String::NewFromUtf8(isolate, "isDirectory").ToLocalChecked(),
-					v8::Boolean::New(isolate, false));
+					v8::Boolean::New(isolate, false)).Check();
 
 			object->Set(
 					isolate->GetCurrentContext(),
 					v8::String::NewFromUtf8(isolate, "filename").ToLocalChecked(),
-					v8::String::NewFromUtf8(isolate, filename.c_str()).ToLocalChecked());
+					v8::String::NewFromUtf8(isolate, filename.c_str()).ToLocalChecked()).Check();
 
-			result->Set(isolate->GetCurrentContext(), result_index, object);
+			result->Set(isolate->GetCurrentContext(), result_index, object).Check();
 			result_index++;
 		}
 	}
@@ -302,7 +312,7 @@ void RemoveFile(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	auto OK = fs::remove(filename, err);
 	if (!OK) {
 		PrintErrorTag();
-		std::cerr << " " << std::system_category().message(GetLastError())
+		std::cerr << " " << std::system_category().message(errno)
 							<< std::endl;
 	}
 }
@@ -337,7 +347,7 @@ void RemoveDir(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	auto OK = fs::remove_all(dirname, err);
 	if (!OK) {
 		PrintErrorTag();
-		std::cerr << " " << std::system_category().message(GetLastError())
+		std::cerr << " " << std::system_category().message(errno)
 							<< std::endl;
 	}
 }
@@ -353,7 +363,7 @@ void RemoveAny(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	auto OK = fs::remove_all(pathname, err);
 	if (!OK) {
 		PrintErrorTag();
-		std::cerr << " " << std::system_category().message(GetLastError())
+		std::cerr << " " << std::system_category().message(errno)
 							<< std::endl;
 	}
 }
@@ -385,7 +395,7 @@ void Rename(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 	if (err.value() != 0) {
 		PrintErrorTag();
-		std::cerr << " " << std::system_category().message(GetLastError())
+		std::cerr << " " << std::system_category().message(errno)
 							<< std::endl;
 	}
 }
@@ -407,7 +417,7 @@ void Move(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 	if (err.value() != 0) {
 		PrintErrorTag();
-		std::cerr << " " << std::system_category().message(GetLastError())
+		std::cerr << " " << std::system_category().message(errno)
 							<< std::endl;
 	}
 }
@@ -429,7 +439,7 @@ void Copy(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 	if (err.value() != 0) {
 		PrintErrorTag();
-		std::cerr << " " << std::system_category().message(GetLastError())
+		std::cerr << " " << std::system_category().message(errno)
 							<< std::endl;
 	}
 }
@@ -453,7 +463,7 @@ void CreateNewDir(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 	if (err.value() != 0) {
 		PrintErrorTag();
-		std::cerr << " " << std::system_category().message(GetLastError())
+		std::cerr << " " << std::system_category().message(errno)
 							<< std::endl;
 	}
 }
@@ -511,11 +521,6 @@ void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args) {
 		}
 	}
 
-	// C style shortcut si.cb = sizeof(ci)
-	STARTUPINFO si = {sizeof(si)};
-
-	PROCESS_INFORMATION pi;
-
 	v8::String::Utf8Value str(isolate, args[0]);
 	std::string process_command = ToCString(str);
 
@@ -528,41 +533,7 @@ void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 	process_command.append(params_appendage);
 
-	auto OK = CreateProcessA(nullptr,
-		const_cast<char*>(process_command.c_str()),
-		nullptr,
-		nullptr,
-		FALSE,
-		0,                     
-		NULL, 
-		NULL,        
-		&si, 
-		&pi);
-
-	// check if Windows was able to spawn a new child process
-	if (OK) {
-		if (verbose) {
-			 std::cout << "Process with PID " << pi.dwProcessId
-								 << " is currently running..." << std::endl;
-		}
-
-		// Wait untill Process object is signaled (usually when child process terminates)
-		auto status = WaitForSingleObject(pi.hProcess, INFINITE);
-
-		if (status == WAIT_OBJECT_0 && verbose) {
-			std::cout << "Process " << pi.dwProcessId << " ended execution!"
-								<< std::endl;
-		}
-
-		// Handles must be explicitly closed. If not, the parent process will
-		// hold on to it even if the child process is terminated.
-		CloseHandle(pi.hProcess);
-		CloseHandle(pi.hThread);
-	} else {
-		PrintErrorTag();
-		std::cerr << " " << std::system_category().message(GetLastError())
-							<< std::endl;
-	}
+  CreateNewProcess(process_command, verbose);
 }
 
 /** The callback that is invoked by v8 whenever the JavaScript 'help'

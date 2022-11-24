@@ -112,7 +112,12 @@ int V8Shell::Run() {
 
         continue;
       }
-      file_content.value().ToLocal(&source);
+      auto OK = file_content.value().ToLocal(&source);
+
+      if (!OK) {
+        isolate_->ThrowError("[Error] Cannot stringify file content");
+      }
+
       bool success =
           Commands::ExecuteString(isolate_, source, file_name, false, true);
 
