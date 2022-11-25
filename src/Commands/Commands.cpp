@@ -478,7 +478,7 @@ void CreateNewDir(const v8::FunctionCallbackInfo<v8::Value>& args) {
  *  Third argument is controls verbosity of this functions. */
 void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	auto* isolate = args.GetIsolate();
-	auto* context =  &(isolate->GetCurrentContext());
+	auto context = isolate->GetCurrentContext();
 	bool verbose = true;
 
 	if (!(args[0]->IsString())) {
@@ -500,12 +500,12 @@ void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 		// Iterate over object entries
 		for (unsigned int i = 0; i < params_count; i++) {
-			auto param = params->Get(*context, i).ToLocalChecked();
+			auto param = params->Get(context, i).ToLocalChecked();
 
 			// Parse Object key-val pairs as strings
 			v8::String::Utf8Value parameter(isolate, param);
 			v8::String::Utf8Value value(
-					isolate, object->Get(*context, param).ToLocalChecked());
+					isolate, object->Get(context, param).ToLocalChecked());
 
 			// -h vs --help
 			params_appendage.append(parameter.length() == 1 ? " -" : " --");

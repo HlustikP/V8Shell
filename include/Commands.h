@@ -14,7 +14,9 @@
 
 #if _WIN32
 #include "V8SWindowsApi.h"
-#endif // _WIN32
+#else // UNIX
+#include "V8SLinuxApi.h"
+#endif
 
 #include "console.hpp"
 
