@@ -9,7 +9,6 @@ elseif(UNIX)
 endif()
 
 target_include_directories(Commands PUBLIC $ENV{V8_INCLUDE} "${PROJECT_SOURCE_DIR}/include")
-
 target_link_directories(Commands PUBLIC $ENV{V8_LIB})
 
 if(WIN32)

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <tuple>
+#include <vector>
+
 #include "Commands.h"
 
 struct Settings {
@@ -23,10 +26,9 @@ class V8Shell {
   v8::Local<v8::Context> CreateShellContext();
   void RunShell(v8::Local<v8::Context> context);
 
-#ifdef _WIN32
-  // c++ hooks
   inline static std::vector<std::tuple<std::string, v8::FunctionCallback>>
-      cpp_hooks{std::tuple("print", &Commands::Print),
+    cpp_hooks {
+                std::tuple("print", &Commands::Print),
                 std::tuple("read", &Commands::Read),
                 std::tuple("execute", &Commands::Execute),
                 std::tuple("quit", &Commands::Quit),
@@ -54,11 +56,7 @@ class V8Shell {
                 std::tuple("mkdir", &Commands::CreateNewDir),
                 std::tuple("createDirectory", &Commands::CreateNewDir),
                 std::tuple("createDir", &Commands::CreateNewDir),
-                std::tuple("help", Commands::Help)};
-#else
-  inline static std::vector<std::tuple<std::string, v8::FunctionCallback>>
-    cpp_hooks;
-#endif
+                std::tuple("help", &Commands::Help)};
 
   std::unique_ptr<v8::Platform> platform_;
   v8::Isolate::CreateParams create_params_;
