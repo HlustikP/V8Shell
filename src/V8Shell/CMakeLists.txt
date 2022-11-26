@@ -9,7 +9,7 @@ target_link_directories(V8Shell PUBLIC $ENV{V8_LIB})
 target_link_libraries(V8Shell PUBLIC Commands)
 
 if(WIN32)
-    target_link_libraries(V8Shell PUBLIC V8WindowsApi v8_monolith.lib winmm.lib dbghelp.lib)
+    target_link_libraries(V8Shell PUBLIC V8SWindowsApi v8_monolith.lib winmm.lib dbghelp.lib)
 elseif(UNIX)
     target_link_libraries(V8Shell PUBLIC V8SLinuxApi libv8_monolith.a)
 endif()
