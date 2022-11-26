@@ -7,7 +7,7 @@
 
 struct Settings {
   bool run_shell;
-  inline const static std::string current_version = "0.3.0";
+  inline const static std::string current_version = "0.4.0";
 };
 
 
