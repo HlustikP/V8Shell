@@ -13,7 +13,7 @@ struct Settings {
 
 class V8Shell {
  public:
-  V8Shell(int argc, char** argv, int& exit_code);
+  V8Shell(int argc, const char** argv, int& exit_code);
   ~V8Shell();
 
   // V8 isolates are supposed to be unique per process
@@ -63,5 +63,5 @@ class V8Shell {
   v8::Isolate* isolate_;
   Settings settings_;
   int argc_;
-  char** argv_;
+  const char** argv_;
 };

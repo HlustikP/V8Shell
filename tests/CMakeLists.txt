@@ -12,7 +12,7 @@ target_link_libraries(tests PUBLIC V8Shell Commands GTest::gtest_main)
 if(WIN32)
     target_link_libraries(tests PUBLIC V8SWindowsApi winmm.lib dbghelp.lib v8_monolith.lib)
 elseif(UNIX)
-    target_link_libraries(tests PUBLIC V8SLinuxApi libv8_monolith.a)
+    target_link_libraries(tests PUBLIC V8SLinuxApi libv8_monolith.a ${CMAKE_DL_LIBS})
 endif()
 
 include(GoogleTest)

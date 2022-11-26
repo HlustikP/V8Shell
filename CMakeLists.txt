@@ -32,7 +32,4 @@ endif()
 add_compile_definitions(V8_COMPRESS_POINTERS V8_ENABLE_SANDBOX)
 
 add_subdirectory(src)
-
-if(WIN32)
-    add_subdirectory(tests)
-endif()
+add_subdirectory(tests)

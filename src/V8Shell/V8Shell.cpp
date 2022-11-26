@@ -1,6 +1,6 @@
 #include "../../include/V8Shell.h"
 
-V8Shell::V8Shell(int argc, char** argv, int& exit_code) {
+V8Shell::V8Shell(int argc, const char** argv, int& exit_code) {
   v8::V8::InitializeICUDefaultLocation(argv[0]);
   v8::V8::InitializeExternalStartupData(argv[0]);
   platform_ = v8::platform::NewDefaultPlatform();
@@ -20,7 +20,7 @@ V8Shell::V8Shell(int argc, char** argv, int& exit_code) {
   settings_.run_shell = (argc == 1);
 
   v8::V8::InitializePlatform(platform_.get());
-  v8::V8::SetFlagsFromCommandLine(&argc, argv, true);
+  v8::V8::SetFlagsFromCommandLine(&argc, const_cast<char**>(argv), true);
   v8::V8::Initialize();
 
   auto v8_setup_valid = SetupV8Isolate();
