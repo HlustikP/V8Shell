@@ -3,11 +3,18 @@
 
 namespace Commands {
 
-void CreateNewProcess(std::string& process_command, bool verbose) {
+void CreateNewProcess(std::string& process_path, std::vector<std::string>& args, bool verbose) {
   // C style shortcut si.cb = sizeof(ci)
   STARTUPINFO si = { sizeof(si) };
 
   PROCESS_INFORMATION pi;
+
+  std::string process_command;
+
+  process_command.append(process_command);
+  for (auto arg : args) {
+    process_command.append(" ").append(arg);
+  }
 
   auto OK = CreateProcessA(nullptr,
     const_cast<char*>(process_command.c_str()),
@@ -41,7 +48,7 @@ void CreateNewProcess(std::string& process_command, bool verbose) {
     CloseHandle(pi.hThread);
   }
   else {
-    std::cerr << " " << std::system_category().message(GetLastError())
+    std::cerr << std::system_category().message(GetLastError())
       << std::endl;
   }
 }

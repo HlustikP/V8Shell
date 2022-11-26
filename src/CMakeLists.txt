@@ -6,7 +6,7 @@ add_executable (V8ShellMain
 )
 
 if(WIN32)
-    set_target_properties(V8ShellMain PROPERTIES OUTPUT_NAME "V8Shell")
+    set_target_properties(V8ShellMain PROPERTIES OUTPUT_NAME "v8s")
 endif()
 
 add_subdirectory(Commands)

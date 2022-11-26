@@ -3,9 +3,10 @@
 
 #include <Windows.h>
 #include <iostream>
+#include <vector>
 
 namespace Commands {
 
-void CreateNewProcess(std::string& process_command, bool verbose);
+void CreateNewProcess(std::string& process_path, std::vector<std::string>& args, bool verbose);
 
 };

@@ -3,7 +3,7 @@
 namespace Commands {
 
 // path + string = path
-fs::path operator+(fs::path const& lhs, std::string const& rhs) {
+fs::path operator+=(fs::path const& lhs, std::string const& rhs) {
 	fs::path result = lhs;
 	result.append(rhs);
 
@@ -182,7 +182,7 @@ void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 		fs::path try_path = fs::path(value).is_absolute()
 														? fs::path(value)
-														: RuntimeMemory::current_directoy + value;
+														: RuntimeMemory::current_directoy += value;
 
 		if (!fs::is_directory(try_path)) {
 			PrintErrorTag();
@@ -488,7 +488,7 @@ void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args) {
 		return;
 	}
 
-	std::string params_appendage = "";
+  std::vector<std::string> process_args;
 
 	// Format additional parameters
 	if (args.Length() > 1 && (args[1]->IsObject())) {
@@ -499,18 +499,26 @@ void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args) {
 		auto params_count = params->Length();
 
 		// Iterate over object entries
-		for (unsigned int i = 0; i < params_count; i++) {
-			auto param = params->Get(context, i).ToLocalChecked();
+    for (unsigned int i = 0; i < params_count; i++) {
+      auto param = params->Get(context, i).ToLocalChecked();
 
-			// Parse Object key-val pairs as strings
-			v8::String::Utf8Value parameter(isolate, param);
-			v8::String::Utf8Value value(
-					isolate, object->Get(context, param).ToLocalChecked());
+      // Parse Object key-val pairs as strings
+      v8::String::Utf8Value parameter(isolate, param);
+      v8::String::Utf8Value value(
+          isolate, object->Get(context, param).ToLocalChecked());
 
-			// -h vs --help
-			params_appendage.append(parameter.length() == 1 ? " -" : " --");
-			params_appendage.append(ToCString(parameter)).append(" ")
-				.append(ToCString(value));
+      // -h vs --help
+      std::string arg = (parameter.length() == 1 ? "-" : "--");
+      arg.append(ToCString(parameter));
+
+      auto c_value = ToCString(value);
+
+      // Check if value is an empty string
+      if (c_value[0] != '\0') {
+        arg.append(" ").append(c_value);
+      }
+
+      process_args.push_back(arg);
 		}   
 	}
 
@@ -531,9 +539,7 @@ void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args) {
 		process_command = try_local_file.generic_string();
 	}
 
-	process_command.append(params_appendage);
-
-  CreateNewProcess(process_command, verbose);
+  CreateNewProcess(process_command, process_args, verbose);
 }
 
 /** The callback that is invoked by v8 whenever the JavaScript 'help'
