@@ -105,4 +105,12 @@ struct MoveFileTo {
   inline static std::string target_file = "test-dir/move-to/move-me.txt";
 };
 
+#if _WIN32
+struct SpawnProcessSyncNoArgs {
+  inline static int argc = 2;
+  inline static const char* argv[] = { "tests", "../../../tests/scripts/win-spawn-process-no-args.js" };
+  inline static std::string target_dir = "test-dir/proc-one";
+};
+#endif
+
 }  // namespace test

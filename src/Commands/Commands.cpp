@@ -2,12 +2,20 @@
 
 namespace Commands {
 
-// path + string = path
+// overwrites lhs with a copy of lhs+rhs
 fs::path operator+=(fs::path const& lhs, std::string const& rhs) {
 	fs::path result = lhs;
 	result.append(rhs);
 
 	return result;
+}
+
+// creates a copy of lhs, appends lhs and returns that apended-to copy
+fs::path operator+(fs::path const& lhs, std::string const& rhs) {
+  fs::path result = lhs;
+  result.append(rhs);
+
+  return result;
 }
 
 /** Setter for the current working directory of the shell. */
@@ -140,8 +148,6 @@ void Version(const v8::FunctionCallbackInfo<v8::Value>& args) {
  *  inputting a string will attempt to enter a subdirectory. */
 void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	if (args.Length() == 0) {
-		PrintCWD();
-
 		return;
 	}
 
@@ -182,7 +188,7 @@ void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 		fs::path try_path = fs::path(value).is_absolute()
 														? fs::path(value)
-														: RuntimeMemory::current_directoy += value;
+														: RuntimeMemory::current_directoy + value;
 
 		if (!fs::is_directory(try_path)) {
 			PrintErrorTag();
@@ -489,6 +495,9 @@ void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	}
 
   std::vector<std::string> process_args;
+  const char* kAppendix = "_APPEND";
+  const char* kPrependix = "_PREPEND";
+  const char* appendix = nullptr;
 
 	// Format additional parameters
 	if (args.Length() > 1 && (args[1]->IsObject())) {
@@ -507,20 +516,38 @@ void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args) {
       v8::String::Utf8Value value(
           isolate, object->Get(context, param).ToLocalChecked());
 
+      auto c_param = ToCString(parameter);
+      auto c_value = ToCString(value);
+
+      // _PREPEND
+      if (strcmp(c_param, kPrependix) == 0) {
+        process_args.insert(process_args.begin(), c_value);
+
+        continue;
+      }
+      // _APPEND
+      if (strcmp(c_param, kAppendix) == 0) {
+        appendix = c_value;
+
+        continue;
+      }
+
       // -h vs --help
       std::string arg = (parameter.length() == 1 ? "-" : "--");
-      arg.append(ToCString(parameter));
-
-      auto c_value = ToCString(value);
+      arg.append(c_param);
 
       // Check if value is an empty string
       if (c_value[0] != '\0') {
         arg.append(" ").append(c_value);
       }
 
-      process_args.push_back(arg);
+      process_args.emplace_back(arg);
 		}   
 	}
+
+  if (appendix != nullptr) {
+    process_args.emplace_back(appendix);
+  }
 
 	if (args.Length() > 2) {
 		if (args[2]->IsBoolean() &&

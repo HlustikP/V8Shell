@@ -11,8 +11,8 @@ void CreateNewProcess(std::string& process_path, std::vector<std::string>& args,
 
   std::string process_command;
 
-  process_command.append(process_command);
-  for (auto arg : args) {
+  process_command.append(process_path);
+  for (auto& arg : args) {
     process_command.append(" ").append(arg);
   }
 
