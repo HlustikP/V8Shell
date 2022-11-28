@@ -2,7 +2,7 @@
 
 namespace Commands {
 
-// overwrites lhs with a copy of lhs+rhs
+/** overwrites lhs with a copy of lhs+rhs */
 fs::path operator+=(fs::path const& lhs, std::string const& rhs) {
 	fs::path result = lhs;
 	result.append(rhs);
@@ -10,7 +10,7 @@ fs::path operator+=(fs::path const& lhs, std::string const& rhs) {
 	return result;
 }
 
-// creates a copy of lhs, appends lhs and returns that apended-to copy
+/** creates a copy of lhs, appends lhs and returns that apended-to copy */
 fs::path operator+(fs::path const& lhs, std::string const& rhs) {
   fs::path result = lhs;
   result.append(rhs);

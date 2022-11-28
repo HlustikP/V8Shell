@@ -13,14 +13,17 @@ struct Settings {
 
 class V8Shell {
  public:
-  V8Shell(int argc, const char** argv, int& exit_code);
+  V8Shell(int argc, const char** argv, int& exit_code /*OUT*/);
   ~V8Shell();
 
   // V8 isolates are supposed to be unique per process
   V8Shell(const V8Shell&) = delete;
+  V8Shell operator=(const V8Shell&) = delete;
 
   int Run();
-  bool AddHook(std::tuple<std::string, v8::FunctionCallback> hook);
+  bool AddHook(std::tuple<std::string, v8::FunctionCallback>& hook);
+  bool RemoveHook(std::string& js_function);
+  bool RemoveHook(v8::FunctionCallback cb);
  private:
   bool SetupV8Isolate();
   v8::Local<v8::Context> CreateShellContext();
@@ -57,11 +60,11 @@ class V8Shell {
                 std::tuple("createDirectory", &Commands::CreateNewDir),
                 std::tuple("createDir", &Commands::CreateNewDir),
                 std::tuple("help", &Commands::Help)};
+  int argc_;
+  const char** argv_;
 
   std::unique_ptr<v8::Platform> platform_;
   v8::Isolate::CreateParams create_params_;
   v8::Isolate* isolate_;
   Settings settings_;
-  int argc_;
-  const char** argv_;
 };

@@ -14,7 +14,8 @@ for bulding the library)
 - compiler support for `C++ 17`
 - `Ninja` and `CMake` (recommended)
 - Set the environment variables `V8_INCLUDE` and `V8_LIB` respective to the paths of the v8
-include directory and the directory containing the v8 static lib
+include directory and the directory containing the v8 static release lib. The `V8_DEBUG`
+env variable is used to find the debug compiled version of the library.
 - with Ninja and CMake installed just execute inside the root dir:
 ```bash
 cmake --preset x64-release

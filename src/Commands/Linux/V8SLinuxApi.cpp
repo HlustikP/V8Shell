@@ -22,6 +22,7 @@ void CreateNewProcess(std::string& process_path, std::vector<std::string>& args,
 
   int status = posix_spawnp(&pid, process_path.c_str(), NULL, NULL,
     const_cast<char**>(&(argv[0])), environ);
+
   if (status == 0) {
     if (verbose) {
       std::cout << "Process with PID " << pid
