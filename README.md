@@ -4,8 +4,8 @@ A shell utilizing V8 thats entirely controlled via Javascript and love.
 ## Requirements
 
 You can download the prebuild executable from the release section of this repo
-- Windows 10 or higher
-- Windows 10 SDK 10.0.20348 or higher
+- `Windows 10` or higher + (recommended) Windows 10 SDK 10.0.20348 or higher
+- Tested on `Ubuntu 22.04` `20.04` and `Kali 2021.4` (Though it `should` run on most modern `debian` based systems)
 
 Additionally if you want to build the source yourself
 - Build v8 as a `static monolithic library`, [the v8 docs will guide you through the process](https://v8.dev/docs)
