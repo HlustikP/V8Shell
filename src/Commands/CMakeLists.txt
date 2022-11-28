@@ -8,6 +8,7 @@ elseif(UNIX)
     add_subdirectory(Linux)
 endif()
 
+set(V8_LIB "")
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     set(V8_LIB $ENV{V8_LIB})
 else()

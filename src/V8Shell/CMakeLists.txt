@@ -11,7 +11,7 @@ else()
     set(V8_LIB $ENV{V8_DEBUG})
 endif()
 
-target_link_directories(V8Shell PUBLIC V8_LIB)
+target_link_directories(V8Shell PUBLIC "${V8_LIB}")
 
 target_link_libraries(V8Shell PUBLIC Commands)
 
