@@ -5,10 +5,11 @@ if (${CMAKE_VERSION} VERSION_GREATER 3.25.0)
     cmake_policy(SET CMP<0048> NEW)
 endif()
 
-project (V8Shell VERSION 0.3.0)
+project (V8Shell VERSION 0.4.0)
 include (CPack)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set (CMAKE_CXX_STANDARD 17)
 
 include(FetchContent)
 set(gtest_force_shared_crt)

@@ -14,7 +14,8 @@ for bulding the library)
 - compiler support for `C++ 17`
 - `Ninja` and `CMake` (recommended)
 - Set the environment variables `V8_INCLUDE` and `V8_LIB` respective to the paths of the v8
-include directory and the directory containing the v8 static lib
+include directory and the directory containing the v8 static release lib. The `V8_DEBUG`
+env variable is used to find the debug compiled version of the library.
 - with Ninja and CMake installed just execute inside the root dir:
 ```bash
 cmake --preset x64-release
@@ -193,7 +194,7 @@ runSync('calc')
 runSync('C:/cool-app/app.exe') // can also pass an absolute path
 ```
 
-Second argument is an optional additional object with parameters to be passed to the executable.
+Second argument is an optional additional object with arguments to be passed to the executable.
 ```js
 // cmd equivalent: cmake --preset x64-release
 runSync('cmake', { preset: 'x64-debug' })
@@ -202,7 +203,16 @@ runSync('cmake', { preset: 'x64-debug' })
 runSync('git', { v: '' })
 ```
 
-Third argument is controls verbosity of this functions. If set to `false` then some
+There are two special properties for this arguments object, namely `_PREPEND` and `_APPEND`.
+The string value of the `_PREPEND` propeperty will be `prepended before` all other arguments.
+The string value of the `_APPEND` property will be `appended after` all other arguments.
+```js
+runSync('git', { /* some props here */ _PREPEND: 'branch'})
+// equivalent to the shell command 'git branch *INSERT OTHER PROPS*'
+```
+Note though that currently these two special properties might not work reliably on `UNIX` systems.
+
+The third argument controls verbosity of this functions. If set to `false` then some
 messages wont be printed, however the standard out/error streams of the child process will
 still be captured and printed.
 ```js

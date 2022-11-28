@@ -2,3 +2,5 @@ build/
 .vs/
 Testing/
 install/
+out/
+bin/

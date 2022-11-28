@@ -1,9 +1,5 @@
 #pragma once
 
-#ifdef _WIN32
-#include <Windows.h>
-#endif
-
 #include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -16,13 +12,19 @@
 #include "libplatform/libplatform.h"
 #include "v8.h"
 
+#if _WIN32
+#include "V8SWindowsApi.h"
+#else // UNIX
+#include "V8SLinuxApi.h"
+#endif
+
 #include "console.hpp"
 
 namespace fs = std::filesystem;
 
 namespace Commands {
 
-volatile struct RuntimeMemory {
+struct RuntimeMemory {
   inline static fs::path current_directoy;
 };
 

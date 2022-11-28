@@ -1,6 +1,7 @@
 #include "../../include/V8Shell.h"
 
-V8Shell::V8Shell(int argc, char** argv, int& exit_code) {
+V8Shell::V8Shell(int argc, const char** argv, int& exit_code)
+                : argc_(argc), argv_(argv) {
   v8::V8::InitializeICUDefaultLocation(argv[0]);
   v8::V8::InitializeExternalStartupData(argv[0]);
   platform_ = v8::platform::NewDefaultPlatform();
@@ -13,14 +14,11 @@ V8Shell::V8Shell(int argc, char** argv, int& exit_code) {
     return;
   }
 
-  argc_ = argc;
-  argv_ = argv;
-
   // no arguments -> run shell, otherwise make it depend on the arguments
   settings_.run_shell = (argc == 1);
 
   v8::V8::InitializePlatform(platform_.get());
-  v8::V8::SetFlagsFromCommandLine(&argc, argv, true);
+  v8::V8::SetFlagsFromCommandLine(&argc, const_cast<char**>(argv), true);
   v8::V8::Initialize();
 
   auto v8_setup_valid = SetupV8Isolate();
@@ -112,7 +110,12 @@ int V8Shell::Run() {
 
         continue;
       }
-      file_content.value().ToLocal(&source);
+      auto OK = file_content.value().ToLocal(&source);
+
+      if (!OK) {
+        isolate_->ThrowError("[Error] Cannot stringify file content");
+      }
+
       bool success =
           Commands::ExecuteString(isolate_, source, file_name, false, true);
 
@@ -179,7 +182,7 @@ v8::Local<v8::Context> V8Shell::CreateShellContext() {
 
 /** Adds a new hook. If it couldn't be added because it would have added
  *  a duplicate JS global function template, it returns false. */
-bool V8Shell::AddHook(std::tuple<std::string, v8::FunctionCallback> hook) {
+bool V8Shell::AddHook(std::tuple<std::string, v8::FunctionCallback>& hook) {
   // Check if JS function global is already being hooked to.
   for (auto& cpp_hook : cpp_hooks) {
     if (std::get<0>(cpp_hook) == std::get<0>(hook)) {
@@ -189,4 +192,30 @@ bool V8Shell::AddHook(std::tuple<std::string, v8::FunctionCallback> hook) {
 
   cpp_hooks.push_back(hook);
   return true;
+}
+
+/** Removes a c++ hook thats hooked to js_function. Returns true if a hook is removed
+ *  and false if no such hook is found. */
+bool V8Shell::RemoveHook(std::string& js_function) {
+  for (auto i = 0; i < cpp_hooks.size(); i++) {
+    if (std::get<0>(cpp_hooks[i]) == js_function) {
+      cpp_hooks.erase(cpp_hooks.begin() + i);
+
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Removes a c++ hook of function cb. Returns true if a hook is removed
+ *  and false if no such hook is found. */
+bool V8Shell::RemoveHook(v8::FunctionCallback cb) {
+  for (auto i = 0; i < cpp_hooks.size(); i++) {
+    if (std::get<1>(cpp_hooks[i]) == cb) {
+      cpp_hooks.erase(cpp_hooks.begin() + i);
+
+      return true;
+    }
+  }
+  return false;
 }

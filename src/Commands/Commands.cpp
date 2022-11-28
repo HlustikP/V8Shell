@@ -1,13 +1,21 @@
-#include "../../include/Commands.h"
+#include "Commands.h"
 
 namespace Commands {
 
-// path + string = path
-fs::path operator+(fs::path const& lhs, std::string const& rhs) {
+/** overwrites lhs with a copy of lhs+rhs */
+fs::path operator+=(fs::path const& lhs, std::string const& rhs) {
 	fs::path result = lhs;
 	result.append(rhs);
 
 	return result;
+}
+
+/** creates a copy of lhs, appends lhs and returns that apended-to copy */
+fs::path operator+(fs::path const& lhs, std::string const& rhs) {
+  fs::path result = lhs;
+  result.append(rhs);
+
+  return result;
 }
 
 /** Setter for the current working directory of the shell. */
@@ -73,7 +81,12 @@ void Read(const v8::FunctionCallbackInfo<v8::Value>& args) {
 		return;
 	}
 
-	file_content.value().ToLocal(&source);
+	auto OK = file_content.value().ToLocal(&source);
+
+  if (!OK) {
+    args.GetIsolate()->ThrowError("[Error] Cannot stringify file content");
+  }
+
 	args.GetReturnValue().Set(source);
 }
 
@@ -94,7 +107,12 @@ void Execute(const v8::FunctionCallbackInfo<v8::Value>& args) {
 			args.GetIsolate()->ThrowError("[Error] Cannot load file content");
 			return;
 		}
-		file_content.value().ToLocal(&source);
+
+		auto OK = file_content.value().ToLocal(&source);
+
+    if (!OK) {
+      args.GetIsolate()->ThrowError("[Error] Cannot stringify file content");
+    }
 
 		if (!ExecuteString(args.GetIsolate(), source, args[i], false, false)) {
 			args.GetIsolate()->ThrowError("[Error] Failure to execute file content");
@@ -130,8 +148,6 @@ void Version(const v8::FunctionCallbackInfo<v8::Value>& args) {
  *  inputting a string will attempt to enter a subdirectory. */
 void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	if (args.Length() == 0) {
-		PrintCWD();
-
 		return;
 	}
 
@@ -217,15 +233,15 @@ void ListFiles(const v8::FunctionCallbackInfo<v8::Value>& args) {
 				object->Set(
 						isolate->GetCurrentContext(),
 						v8::String::NewFromUtf8(isolate, "isDirectory").ToLocalChecked(),
-						v8::Boolean::New(isolate, true));
+						v8::Boolean::New(isolate, true)).Check();
 
 				object->Set(
 						isolate->GetCurrentContext(),
 						v8::String::NewFromUtf8(isolate, "filename").ToLocalChecked(),
 						v8::String::NewFromUtf8(isolate, filename.c_str())
-								.ToLocalChecked());
+								.ToLocalChecked()).Check();
 
-				result->Set(isolate->GetCurrentContext(), result_index, object);
+				result->Set(isolate->GetCurrentContext(), result_index, object).Check();
 				result_index++;
 			}
 		}
@@ -238,14 +254,14 @@ void ListFiles(const v8::FunctionCallbackInfo<v8::Value>& args) {
 			object->Set(
 					isolate->GetCurrentContext(),
 					v8::String::NewFromUtf8(isolate, "isDirectory").ToLocalChecked(),
-					v8::Boolean::New(isolate, false));
+					v8::Boolean::New(isolate, false)).Check();
 
 			object->Set(
 					isolate->GetCurrentContext(),
 					v8::String::NewFromUtf8(isolate, "filename").ToLocalChecked(),
-					v8::String::NewFromUtf8(isolate, filename.c_str()).ToLocalChecked());
+					v8::String::NewFromUtf8(isolate, filename.c_str()).ToLocalChecked()).Check();
 
-			result->Set(isolate->GetCurrentContext(), result_index, object);
+			result->Set(isolate->GetCurrentContext(), result_index, object).Check();
 			result_index++;
 		}
 	}
@@ -302,7 +318,7 @@ void RemoveFile(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	auto OK = fs::remove(filename, err);
 	if (!OK) {
 		PrintErrorTag();
-		std::cerr << " " << std::system_category().message(GetLastError())
+		std::cerr << " " << std::system_category().message(errno)
 							<< std::endl;
 	}
 }
@@ -337,7 +353,7 @@ void RemoveDir(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	auto OK = fs::remove_all(dirname, err);
 	if (!OK) {
 		PrintErrorTag();
-		std::cerr << " " << std::system_category().message(GetLastError())
+		std::cerr << " " << std::system_category().message(errno)
 							<< std::endl;
 	}
 }
@@ -353,7 +369,7 @@ void RemoveAny(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	auto OK = fs::remove_all(pathname, err);
 	if (!OK) {
 		PrintErrorTag();
-		std::cerr << " " << std::system_category().message(GetLastError())
+		std::cerr << " " << std::system_category().message(errno)
 							<< std::endl;
 	}
 }
@@ -385,7 +401,7 @@ void Rename(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 	if (err.value() != 0) {
 		PrintErrorTag();
-		std::cerr << " " << std::system_category().message(GetLastError())
+		std::cerr << " " << std::system_category().message(errno)
 							<< std::endl;
 	}
 }
@@ -407,7 +423,7 @@ void Move(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 	if (err.value() != 0) {
 		PrintErrorTag();
-		std::cerr << " " << std::system_category().message(GetLastError())
+		std::cerr << " " << std::system_category().message(errno)
 							<< std::endl;
 	}
 }
@@ -429,7 +445,7 @@ void Copy(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 	if (err.value() != 0) {
 		PrintErrorTag();
-		std::cerr << " " << std::system_category().message(GetLastError())
+		std::cerr << " " << std::system_category().message(errno)
 							<< std::endl;
 	}
 }
@@ -453,7 +469,7 @@ void CreateNewDir(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 	if (err.value() != 0) {
 		PrintErrorTag();
-		std::cerr << " " << std::system_category().message(GetLastError())
+		std::cerr << " " << std::system_category().message(errno)
 							<< std::endl;
 	}
 }
@@ -468,7 +484,7 @@ void CreateNewDir(const v8::FunctionCallbackInfo<v8::Value>& args) {
  *  Third argument is controls verbosity of this functions. */
 void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	auto* isolate = args.GetIsolate();
-	auto* context =  &(isolate->GetCurrentContext());
+	auto context = isolate->GetCurrentContext();
 	bool verbose = true;
 
 	if (!(args[0]->IsString())) {
@@ -478,7 +494,10 @@ void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args) {
 		return;
 	}
 
-	std::string params_appendage = "";
+  std::vector<std::string> process_args;
+  const char* kAppendix = "_APPEND";
+  const char* kPrependix = "_PREPEND";
+  const char* appendix = nullptr;
 
 	// Format additional parameters
 	if (args.Length() > 1 && (args[1]->IsObject())) {
@@ -489,20 +508,46 @@ void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args) {
 		auto params_count = params->Length();
 
 		// Iterate over object entries
-		for (unsigned int i = 0; i < params_count; i++) {
-			auto param = params->Get(*context, i).ToLocalChecked();
+    for (unsigned int i = 0; i < params_count; i++) {
+      auto param = params->Get(context, i).ToLocalChecked();
 
-			// Parse Object key-val pairs as strings
-			v8::String::Utf8Value parameter(isolate, param);
-			v8::String::Utf8Value value(
-					isolate, object->Get(*context, param).ToLocalChecked());
+      // Parse Object key-val pairs as strings
+      v8::String::Utf8Value parameter(isolate, param);
+      v8::String::Utf8Value value(
+          isolate, object->Get(context, param).ToLocalChecked());
 
-			// -h vs --help
-			params_appendage.append(parameter.length() == 1 ? " -" : " --");
-			params_appendage.append(ToCString(parameter)).append(" ")
-				.append(ToCString(value));
+      auto c_param = ToCString(parameter);
+      auto c_value = ToCString(value);
+
+      // _PREPEND
+      if (strcmp(c_param, kPrependix) == 0) {
+        process_args.insert(process_args.begin(), c_value);
+
+        continue;
+      }
+      // _APPEND
+      if (strcmp(c_param, kAppendix) == 0) {
+        appendix = c_value;
+
+        continue;
+      }
+
+      // -h vs --help
+      std::string arg = (parameter.length() == 1 ? "-" : "--");
+      arg.append(c_param);
+
+      // Check if value is an empty string
+      if (c_value[0] != '\0') {
+        arg.append(" ").append(c_value);
+      }
+
+      process_args.emplace_back(arg);
 		}   
 	}
+
+  if (appendix != nullptr) {
+    process_args.emplace_back(appendix);
+  }
 
 	if (args.Length() > 2) {
 		if (args[2]->IsBoolean() &&
@@ -510,11 +555,6 @@ void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args) {
 			 verbose = false;
 		}
 	}
-
-	// C style shortcut si.cb = sizeof(ci)
-	STARTUPINFO si = {sizeof(si)};
-
-	PROCESS_INFORMATION pi;
 
 	v8::String::Utf8Value str(isolate, args[0]);
 	std::string process_command = ToCString(str);
@@ -526,43 +566,7 @@ void StartProcessSync(const v8::FunctionCallbackInfo<v8::Value>& args) {
 		process_command = try_local_file.generic_string();
 	}
 
-	process_command.append(params_appendage);
-
-	auto OK = CreateProcessA(nullptr,
-		const_cast<char*>(process_command.c_str()),
-		nullptr,
-		nullptr,
-		FALSE,
-		0,                     
-		NULL, 
-		NULL,        
-		&si, 
-		&pi);
-
-	// check if Windows was able to spawn a new child process
-	if (OK) {
-		if (verbose) {
-			 std::cout << "Process with PID " << pi.dwProcessId
-								 << " is currently running..." << std::endl;
-		}
-
-		// Wait untill Process object is signaled (usually when child process terminates)
-		auto status = WaitForSingleObject(pi.hProcess, INFINITE);
-
-		if (status == WAIT_OBJECT_0 && verbose) {
-			std::cout << "Process " << pi.dwProcessId << " ended execution!"
-								<< std::endl;
-		}
-
-		// Handles must be explicitly closed. If not, the parent process will
-		// hold on to it even if the child process is terminated.
-		CloseHandle(pi.hProcess);
-		CloseHandle(pi.hThread);
-	} else {
-		PrintErrorTag();
-		std::cerr << " " << std::system_category().message(GetLastError())
-							<< std::endl;
-	}
+  CreateNewProcess(process_command, process_args, verbose);
 }
 
 /** The callback that is invoked by v8 whenever the JavaScript 'help'
