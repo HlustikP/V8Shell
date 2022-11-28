@@ -16,6 +16,7 @@ set_property(TARGET V8ShellMain PROPERTY CXX_STANDARD 17)
 
 target_include_directories(V8ShellMain PUBLIC $ENV{V8_INCLUDE} "${PROJECT_SOURCE_DIR}/include")
 
+set(V8_LIB "")
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     set(V8_LIB $ENV{V8_LIB})
 else()

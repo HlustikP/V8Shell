@@ -6,13 +6,14 @@ set_property(TARGET tests PROPERTY CXX_STANDARD 17)
 
 target_include_directories(tests PUBLIC $ENV{V8_INCLUDE} "${PROJECT_SOURCE_DIR}/include")
 
+set(V8_LIB "")
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     set(V8_LIB $ENV{V8_LIB})
 else()
     set(V8_LIB $ENV{V8_DEBUG})
 endif()
 
-target_link_directories(tests PUBLIC V8_LIB)
+target_link_directories(tests PUBLIC "${V8_LIB}")
 
 target_link_libraries(tests PUBLIC V8Shell Commands GTest::gtest_main)
 

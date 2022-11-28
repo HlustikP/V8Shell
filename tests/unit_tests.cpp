@@ -154,6 +154,7 @@ TEST(V8Shell, MoveFileTo) {
   EXPECT_TRUE(fs::exists(test::MoveFileTo::target_file));
 }
 
+#if _WIN32
 TEST(V8Shell, SpawnProcessSyncNoArgs) {
   int exit_code = 0;
   V8Shell shell(test::SpawnProcessSyncNoArgs::argc,
@@ -163,3 +164,4 @@ TEST(V8Shell, SpawnProcessSyncNoArgs) {
 
   EXPECT_TRUE(fs::exists(test::SpawnProcessSyncNoArgs::target_dir));
 }
+#endif
